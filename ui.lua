@@ -57,7 +57,7 @@ function ui:draw()
         self.showDisplayWindow = imgui.Begin("Display", nil, { "NoCollapse", "MenuBar" })--, { "ImGuiWindowFlags_AlwaysAutoResize" })
         if imgui.BeginMenuBar() then
             if imgui.BeginMenu("Effects") then
-                for k in #self.shaders do
+                for k, _ in pairs(self.shaders) do
                     if imgui.MenuItem(k, nil, self.shaders[k], true) then
                         self.shaders[k] = not self.shaders[k]
                         if self.shaders[k] then
