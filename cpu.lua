@@ -112,17 +112,17 @@ end
 
 function CPU:restoreFromStack()
     self.registers.status(self.memory[self.registers.sp() + 1])
-    self.registers.b(self.memory[self.cpuregisters.sp() + 2])
-    self.registers.a(self.memory[self.cpu.registers.sp() + 3])
-    self.registers.ix(bit.bor(bit.lshift(self.memory[self.cpu.registers.sp() + 4], 8), self.memory[self.cpu.registers.sp() + 5]))
-    self.registers.pc(bit.bor(bit.lshift(self.memory[self.cpu.registers.sp() + 6], 8), self.memory[self.cpu.registers.sp() + 7]))
+    self.registers.b(self.memory[self.registers.sp() + 2])
+    self.registers.a(self.memory[self.registers.sp() + 3])
+    self.registers.ix(bit.bor(bit.lshift(self.memory[self.registers.sp() + 4], 8), self.memory[self.registers.sp() + 5]))
+    self.registers.pc(bit.bor(bit.lshift(self.memory[self.registers.sp() + 6], 8), self.memory[self.registers.sp() + 7]))
     self.registers.sp(self.registers.sp() + 7)
 end
 
 function CPU:fetch()
     local opcode = self.memory[self.registers.pc()]
 
-   --print(string.format("%04X: %02X", self.registers.pc(), opcode))
+    --print(string.format("%04X: %02X", self.registers.pc(), opcode))
 
     self.registers.pc(self.registers.pc() + 1)
     return opcode
