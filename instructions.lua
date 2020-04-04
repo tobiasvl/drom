@@ -107,6 +107,18 @@ function instructions:idx()
     end
 end
 
+function instructions:immx()
+    local pc = self.cpu.registers.pc()
+    self.cpu.registers.pc(pc + 1)
+    return function(newValue)
+        --if newValue then
+        --    self.cpu.memory[self.cpu.registers.ix() + self.cpu.memory[pc]] = bit.band(newValue, 0xFF)
+        --else
+            return self.cpu.registers.ix() + self.cpu.memory[pc]
+        --end
+    end
+end
+
 function instructions:idx16()
     local pc = self.cpu.registers.pc()
     self.cpu.registers.pc(pc + 1)

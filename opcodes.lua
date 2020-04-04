@@ -724,7 +724,7 @@ return {
     [0x6E] = {
         instruction = "jmp",
         cycles = 2,
-        addr_mode = "idx"
+        addr_mode = "immx"--"idx"
     },
     [0x6F] = {
         instruction = "clr",
@@ -1047,7 +1047,7 @@ return {
     [0xAD] = {
         instruction = "jsr",
         cycles = 8,
-        addr_mode = "idx",
+        addr_mode = "immx"--"idx",
     },
     [0xAE] = {
         instruction = "lds",
