@@ -137,7 +137,7 @@ function CPU:decode(opcode)
 end
 
 function CPU:execute(operation)--instruction, addr_mode, acc)
-    local addr_mode = instructions[operation.addr_mode](self, operation.acc)
+    local addr_mode = instructions[operation.addr_mode](instructions, operation.acc)
     instructions[operation.instruction](instructions, addr_mode, operation.acc)--instruction(instructions, addr_mode, acc)
 
     --print(operation.instruction .. " " .. (operation.acc or "") .. (addr_mode() and string.format(" %04X", addr_mode()) or ""))

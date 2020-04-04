@@ -10,124 +10,124 @@ end
 function instructions:acc(acc)
     return function(newValue)
         if newValue then
-            self.registers[acc](newValue)
+            self.cpu.registers[acc](newValue)
         else
-            return self.registers[acc]()
+            return self.cpu.registers[acc]()
         end
     end
 end
 
 function instructions:imm()
-    local pc = self.registers.pc()
-    self.registers.pc(pc + 1)
+    local pc = self.cpu.registers.pc()
+    self.cpu.registers.pc(pc + 1)
     return function()--(newValue)
         --if newValue then
-        --    self.memory[pc] = bit.band(newValue, 0xFF)
+        --    self.cpu.memory[pc] = bit.band(newValue, 0xFF)
         --else
-            return self.memory[pc]
+            return self.cpu.memory[pc]
         --end
     end
 end
 
 function instructions:imm16()
-    local pc = self.registers.pc()
-    self.registers.pc(pc + 2)
+    local pc = self.cpu.registers.pc()
+    self.cpu.registers.pc(pc + 2)
     return function()--(newValue)
         --if newValue then
-        --    self.memory[pc], self.memory[pc + 1] = bit.rshift(bit.band(newValue, 0xFFFF), 8), bit.band(newValue, 0xFF)
+        --    self.cpu.memory[pc], self.cpu.memory[pc + 1] = bit.rshift(bit.band(newValue, 0xFFFF), 8), bit.band(newValue, 0xFF)
         --else
-            return bit.bor(bit.lshift(self.memory[pc], 8), self.memory[pc + 1])
+            return bit.bor(bit.lshift(self.cpu.memory[pc], 8), self.cpu.memory[pc + 1])
         --end
     end
 end
 
 function instructions:dir()
-    local pc = self.registers.pc()
-    self.registers.pc(pc + 1)
+    local pc = self.cpu.registers.pc()
+    self.cpu.registers.pc(pc + 1)
     return function(newValue)
         if newValue then
-            self.memory[self.memory[pc]] = bit.band(newValue, 0xFF)
+            self.cpu.memory[self.cpu.memory[pc]] = bit.band(newValue, 0xFF)
         else
-            return self.memory[self.memory[pc]]
+            return self.cpu.memory[self.cpu.memory[pc]]
         end
     end
 end
 
 function instructions:dir16()
-    local pc = self.registers.pc()
-    self.registers.pc(pc + 1)
+    local pc = self.cpu.registers.pc()
+    self.cpu.registers.pc(pc + 1)
     return function(newValue)
         if newValue then
-            self.memory[self.memory[pc]], self.memory[self.memory[pc] + 1] = bit.rshift(bit.band(newValue, 0xFFFF), 8), bit.band(newValue, 0xFF)
+            self.cpu.memory[self.cpu.memory[pc]], self.cpu.memory[self.cpu.memory[pc] + 1] = bit.rshift(bit.band(newValue, 0xFFFF), 8), bit.band(newValue, 0xFF)
         else
-            return bit.bor(bit.lshift(self.memory[self.memory[pc]], 8), self.memory[self.memory[pc] + 1])
+            return bit.bor(bit.lshift(self.cpu.memory[self.cpu.memory[pc]], 8), self.cpu.memory[self.cpu.memory[pc] + 1])
             -- TODO is this right??
         end
     end
 end
 
 function instructions:ext()
-    local pc = self.registers.pc()
-    self.registers.pc(pc + 2)
+    local pc = self.cpu.registers.pc()
+    self.cpu.registers.pc(pc + 2)
     return function(newValue)
         if newValue then
-            self.memory[bit.bor(bit.lshift(self.memory[pc], 8), self.memory[pc + 1])] = bit.band(newValue, 0xFF)
-            --self.memory[self.memory[pc]], self.memory[self.memory[pc + 1]] = bit.rshift(bit.band(newValue, 0xFFFF), 8), bit.band(newValue, 0xFF)
+            self.cpu.memory[bit.bor(bit.lshift(self.cpu.memory[pc], 8), self.cpu.memory[pc + 1])] = bit.band(newValue, 0xFF)
+            --self.cpu.memory[self.cpu.memory[pc]], self.cpu.memory[self.cpu.memory[pc + 1]] = bit.rshift(bit.band(newValue, 0xFFFF), 8), bit.band(newValue, 0xFF)
         else
-            return self.memory[bit.bor(bit.lshift(self.memory[pc], 8), self.memory[pc + 1])]
-            --return bit.bor(bit.lshift(self.memory[pc], 8), self.memory[pc + 1])
-            --return bit.bor(bit.lshift(self.memory[self.memory[pc]], 8), self.memory[self.memory[pc + 1]])
-            --return bit.bor(bit.lshift(self.memory[pc], 8), self.memory[pc + 1])
+            return self.cpu.memory[bit.bor(bit.lshift(self.cpu.memory[pc], 8), self.cpu.memory[pc + 1])]
+            --return bit.bor(bit.lshift(self.cpu.memory[pc], 8), self.cpu.memory[pc + 1])
+            --return bit.bor(bit.lshift(self.cpu.memory[self.cpu.memory[pc]], 8), self.cpu.memory[self.cpu.memory[pc + 1]])
+            --return bit.bor(bit.lshift(self.cpu.memory[pc], 8), self.cpu.memory[pc + 1])
             -- TODO check all instances of EXT to see if it expects memory contents (some will)
         end
     end
 end
 
 function instructions:ext16()
-    local pc = self.registers.pc()
-    self.registers.pc(pc + 2)
+    local pc = self.cpu.registers.pc()
+    self.cpu.registers.pc(pc + 2)
     return function(newValue)
         if newValue then
-            self.memory[self.memory[pc]], self.memory[self.memory[pc + 1]] = bit.rshift(bit.band(newValue, 0xFFFF), 8), bit.band(newValue, 0xFF)
+            self.cpu.memory[self.cpu.memory[pc]], self.cpu.memory[self.cpu.memory[pc + 1]] = bit.rshift(bit.band(newValue, 0xFFFF), 8), bit.band(newValue, 0xFF)
         else
-            return bit.bor(bit.lshift(self.memory[self.memory[pc]], 8), self.memory[self.memory[pc + 1]])
+            return bit.bor(bit.lshift(self.cpu.memory[self.cpu.memory[pc]], 8), self.cpu.memory[self.cpu.memory[pc + 1]])
         end
     end
 end
 
 function instructions:idx()
-    local pc = self.registers.pc()
-    self.registers.pc(pc + 1)
+    local pc = self.cpu.registers.pc()
+    self.cpu.registers.pc(pc + 1)
     return function(newValue)
         if newValue then
-            self.memory[self.registers.ix() + self.memory[pc]] = bit.band(newValue, 0xFF)
+            self.cpu.memory[self.cpu.registers.ix() + self.cpu.memory[pc]] = bit.band(newValue, 0xFF)
         else
-            return self.memory[self.registers.ix() + self.memory[pc]]
+            return self.cpu.memory[self.cpu.registers.ix() + self.cpu.memory[pc]]
         end
     end
 end
 
 function instructions:idx16()
-    local pc = self.registers.pc()
-    self.registers.pc(pc + 1)
+    local pc = self.cpu.registers.pc()
+    self.cpu.registers.pc(pc + 1)
     return function(newValue)
         if newValue then
-            self.memory[self.registers.ix() + self.memory[pc]], self.memory[self.registers.ix() + self.memory[pc] + 1] = bit.rshift(bit.band(newValue, 0xFFFF), 8), bit.band(newValue, 0xFF)
+            self.cpu.memory[self.cpu.registers.ix() + self.cpu.memory[pc]], self.cpu.memory[self.cpu.registers.ix() + self.cpu.memory[pc] + 1] = bit.rshift(bit.band(newValue, 0xFFFF), 8), bit.band(newValue, 0xFF)
         else
-            return bit.bor(bit.lshift(self.memory[self.registers.ix() + self.memory[pc]], 8), self.memory[self.registers.ix() + self.memory[pc] + 1])
+            return bit.bor(bit.lshift(self.cpu.memory[self.cpu.registers.ix() + self.cpu.memory[pc]], 8), self.cpu.memory[self.cpu.registers.ix() + self.cpu.memory[pc] + 1])
         end
     end
 end
 
 function instructions:rel()
-    local offset = self.memory[self.registers.pc()]
-    self.registers.pc(self.registers.pc() + 1)
+    local offset = self.cpu.memory[self.cpu.registers.pc()]
+    self.cpu.registers.pc(self.cpu.registers.pc() + 1)
     return function()
         local sign = bit.band(0x80, offset)
         if bit.band(0x80, offset) == 0 then
-            return self.registers.pc() + offset
+            return self.cpu.registers.pc() + offset
         else
-            return self.registers.pc() - bit.band(bit.bnot(offset) + 1, 0xFF)
+            return self.cpu.registers.pc() - bit.band(bit.bnot(offset) + 1, 0xFF)
         end
     end
 end
