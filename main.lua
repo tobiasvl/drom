@@ -104,12 +104,16 @@ function love.update(dt)
         --        CPU.key_status[k] = v
         --    end
         --end
-        while cycles < 1000000 / 50 do
+        while cycles < 1000000 / 50 and not CPU.pause do
             cycles = cycles + CPU:cycle()
             num_instructions = num_instructions + 1
         end
         cycles = cycles - (1000000 / 50)
         CPU.drawflag = true
+
+        CPU.memory[0x8013] = bit.bor(CPU.memory[0x8013], 0x80)
+        --PIA sjekker selv IRQ-flagget sitt og sender IRQ til MPU...
+        CPU.irq = true
 
         --for k, v in pairs(button_status) do
         --    CPU.key_status[k] = temp_key_status[k]
@@ -135,6 +139,32 @@ function love.keypressed(key)
     if not imgui.GetWantCaptureKeyboard() then
         if key_mapping[key] then
             CPU.key_status[key_mapping[key]] = true
+            --CPU.irq = true
+            CPU.memory[0x8011] = bit.bor(CPU.memory[0x8011], 0x80)
+            local key_bits = {
+                ["0"] = 0x00010001,
+                ["1"] = 0x00010010,
+                ["2"] = 0x00010100,
+                ["3"] = 0x00011000,
+                ["4"] = 0x00100001,
+                ["5"] = 0x00100010,
+                ["6"] = 0x00100100,
+                ["7"] = 0x00101000,
+                ["8"] = 0x01000001,
+                ["9"] = 0x01000010,
+                ["A"] = 0x01000100,
+                ["B"] = 0x01001000,
+                ["C"] = 0x10000001,
+                ["D"] = 0x10000010,
+                ["E"] = 0x10000100,
+                ["F"] = 0x10001000
+            }
+            CPU.memory[0x8010] = bit.band(bit.bxor(key_bits[key], 0xFF), 0xFF)
+            --CPU.memory[0x8010] = key_bits[key]
+        elseif key == "lshift" or key == "rshift" then
+            CPU.memory[0x8013] = bit.bor(CPU.memory[0x8013], 0x40)
+        elseif key == "escape" then
+            CPU.reset = true
         end
 
         if key == "space" then CPU.pause = not CPU.pause end
@@ -144,6 +174,12 @@ function love.keypressed(key)
             cycles = cycles + CPU:cycle()
             CPU.drawflag = true
             num_instructions = num_instructions + 1
+            if cycles >= 1000000 / 50 then
+                cycles = cycles - (1000000 / 50)
+                CPU.memory[0x8013] = bit.bor(CPU.memory[0x8013], 0x80)
+                --PIA sjekker selv IRQ-flagget sitt og sender IRQ til MPU...
+                CPU.irq = true
+            end
         end
     end
 end

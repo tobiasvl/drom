@@ -131,6 +131,13 @@ function ui:draw()
         end
         imgui.Text(string.format("CC: 11%s", s))--string.format("CC: %02X", self.CPU.registers.status()))
         imgui.Text("      HINZVC")
+        if self.CPU.irq then
+            imgui.PushStyleColor("ImGui_Text", 1, 0, 0, 1)
+        end
+        imgui.Text("IRQ")
+        if self.CPU.irq then
+            imgui.PopStyleColor()
+        end
         imgui.End()
     end
 
