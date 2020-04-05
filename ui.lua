@@ -3,6 +3,8 @@ local moonshine = require 'moonshine'
 
 local ui = {}
 
+local hex_input_flags = { "ImGuiInputTextFlags_CharsHexadecimal", "ImGuiInputTextFlags_CharsUppercase", "ImGuiInputTextFlags_EnterReturnsTrue"}
+
 function ui:init(CPU)
     self.CPU = CPU
     self.canvases = {
@@ -20,6 +22,9 @@ function ui:init(CPU)
     self.showCPUWindow = true
     self.showInstructionsWindow = true
     self.showMemoryWindow = true
+
+    self.memoryScroll = 0
+    self.memoryScrollNow = false
 
     self.effect = moonshine(64*8, 32*8, moonshine.effects.scanlines)
         .chain(moonshine.effects.glow)
@@ -201,29 +206,43 @@ function ui:draw()
             end
             imgui.EndMenuBar()
         end
+
+        -- Memory breakpoint
         imgui.Text("Breakpoint: ")
         imgui.SameLine()
         imgui.PushItemWidth(4 * 9) -- TODO get char width
-        local breakpoint, breakpoint_input = imgui.InputText("##membreakpoint", self.CPU.memory.breakpoint.address and string.format("%04X", self.CPU.memory.breakpoint.address) or "", 5, { "ImGuiInputTextFlags_CharsHexadecimal", "ImGuiInputTextFlags_CharsUppercase", "ImGuiInputTextFlags_EnterReturnsTrue"})
+        local breakpoint = self.CPU.memory.breakpoint
+        local new_breakpoint, breakpoint_input = imgui.InputText("##membreakpoint", breakpoint.address and string.format("%04X", breakpoint.address) or "", 5, hex_input_flags)
         imgui.PopItemWidth()
         if breakpoint_input then
-            self.CPU.memory.breakpoint.address = tonumber(breakpoint, 16)
+            breakpoint.address = tonumber(new_breakpoint, 16)
         end
         imgui.SameLine()
-        self.CPU.memory.breakpoint.read = imgui.Checkbox("R", self.CPU.memory.breakpoint.read)
+        breakpoint.read = imgui.Checkbox("R", breakpoint.read)
         imgui.SameLine()
-        self.CPU.memory.breakpoint.write = imgui.Checkbox("W", self.CPU.memory.breakpoint.write)
+        breakpoint.write = imgui.Checkbox("W", breakpoint.write)
 
+        -- Memory viewer
+        local padding = 3 -- Vertical space taken up by breakpoint and jump
         local font_height = imgui.GetFontSize() + 4
+        imgui.BeginChild("##memory", 0, -(font_height * padding))
         local win_w, win_h = imgui.GetWindowSize()
-        imgui.BeginChild("##memory", 0, -(font_height * 2))
-        local line = imgui.GetScrollY() / font_height
+        local line = math.floor(imgui.GetScrollY() / font_height)
         for i = 0, 0xFFFF do -- TODO only to the largest mapped memory?
-            -- cull output so we don't bog down the UI
+            -- Set scroll if user has jumped to an address
+            -- imgui.SetScrollHere() sets it immediately, and centers the viewport
+            -- We want the address to be at the top (do we really?) so maths
+            if self.memoryScrollNow and self.memoryScroll == i - math.floor(win_h / font_height / 2) - 1 then
+                imgui.SetScrollHere()
+                line = self.memoryScroll
+                self.memoryScrollNow = false
+            end
+            -- Cull output so we don't bog down the UI
             if i > line - 3 and i < line + (win_h / font_height) then
                 local c = self.CPU.memory[i]
                 imgui.Text(string.format("%04X: %02X %03d", i, c, c))
                 imgui.SameLine()
+                -- Print only printable ASCII characters
                 if c > 31 and c < 127 then imgui.Text(string.char(c) .. " ") else imgui.Text("  ") end
                 imgui.SameLine()
                 local byte = {}
@@ -235,17 +254,36 @@ function ui:draw()
                 imgui.Text("")
             end
         end
+        -- If we should scroll but haven't yet, we want to scroll to the end
+        if self.memoryScrollNow then
+            imgui.SetScrollHere(1)
+            self.memoryScrollNow = false
+        end
         imgui.EndChild()
 
+        -- Scroll
         imgui.Text("Scroll to: ")
         imgui.SameLine()
         imgui.PushItemWidth(4 * 9) -- TODO get char width
-        local scroll, scroll_input = imgui.InputText("##memscroll", string.format("%04X", math.ceil(line)), 5, { "ImGuiInputTextFlags_CharsHexadecimal", "ImGuiInputTextFlags_CharsUppercase", "ImGuiInputTextFlags_EnterReturnsTrue"})
+        local scroll, scroll_input = imgui.InputText("##memscroll", string.format("%04X", self.memoryScroll or 0), 5, hex_input_flags)
         imgui.PopItemWidth()
         if scroll_input then
-            imgui.BeginChild("##memory")
-            imgui.SetScrollHere(math.ceil(tonumber(scroll, 16)))
-            imgui.EndChild()
+            self.memoryScroll = tonumber(scroll, 16)
+            self.memoryScrollNow = true
+        end
+        if imgui.Button("RAM") then
+            self.memoryScroll = 0
+            self.memoryScrollNow = true
+        end
+        imgui.SameLine()
+        if imgui.Button("CHIP-8") then
+            self.memoryScroll = 0x0200
+            self.memoryScrollNow = true
+        end
+        imgui.SameLine()
+        if imgui.Button("ROM") then
+            self.memoryScroll = 0xC000
+            self.memoryScrollNow = true
         end
 
         imgui.End()
