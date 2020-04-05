@@ -143,6 +143,14 @@ function ui:draw()
         if self.CPU.irq then
             imgui.PopStyleColor()
         end
+        imgui.SameLine()
+        if self.CPU.reset then
+            imgui.PushStyleColor("ImGui_Text", 1, 0, 0, 1)
+        end
+        imgui.Text("RST")
+        if self.CPU.reset then
+            imgui.PopStyleColor()
+        end
         imgui.End()
     end
 
