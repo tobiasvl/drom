@@ -61,7 +61,8 @@ local CPU = {
     screen = {}, -- TODO implement as module?
     display = true, -- TODO remove this?
     reset = true,
-    instructions = {}
+    instructions = {},
+    breakpoint = 0
 }
 
 function CPU:init()

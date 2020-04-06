@@ -135,7 +135,6 @@ function instructions:rel()
     local offset = self.cpu.memory[self.cpu.registers.pc()]
     self.cpu.registers.pc(self.cpu.registers.pc() + 1)
     return function()
-        local sign = bit.band(0x80, offset)
         if bit.band(0x80, offset) == 0 then
             return self.cpu.registers.pc() + offset
         else

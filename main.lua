@@ -63,7 +63,6 @@ function love.load(arg)
     --next_time = love.timer.getTime()
     --debug.debug()
 
-    UI:init(CPU)
     CPU:init()
 
     CPU.pause = true
@@ -79,6 +78,8 @@ function love.load(arg)
         CPU.rom_loaded = false
     end
     file:close()
+    
+    UI:init(CPU)
 end
 
 function love.filedropped(file)

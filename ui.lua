@@ -1,15 +1,24 @@
 local imgui = require "imgui"
 local moonshine = require 'moonshine'
+local disassembler = require "disassembler"
 
 local ui = {}
 
-local hex_input_flags = { "ImGuiInputTextFlags_CharsHexadecimal", "ImGuiInputTextFlags_CharsUppercase", "ImGuiInputTextFlags_EnterReturnsTrue"}
+local hex_input_flags = {
+    "ImGuiInputTextFlags_CharsHexadecimal",
+    "ImGuiInputTextFlags_CharsUppercase",
+    "ImGuiInputTextFlags_EnterReturnsTrue"
+}
 
 function ui:init(CPU)
     self.CPU = CPU
+
+    disassembler:disassemble(self.CPU.memory)
+
     self.canvases = {
         display = love.graphics.newCanvas(64*8, 32*8)
     }
+
     self.shaders = {
         scanlines = true,
         glow = true,
@@ -169,39 +178,38 @@ function ui:draw()
         imgui.Text("Breakpoint: ")
         imgui.SameLine()
         imgui.PushItemWidth(4 * 9) -- TODO get char width
-        local text, textinput = imgui.InputText("##breakpoint", self.CPU.breakpoint and string.format("%04X", self.CPU.breakpoint) or "", 5, { "ImGuiInputTextFlags_CharsHexadecimal", "ImGuiInputTextFlags_CharsUppercase"})
+        local text, textinput = imgui.InputText("##breakpoint", self.CPU.breakpoint and string.format("%04X", self.CPU.breakpoint) or "", 5, hex_input_flags)
         imgui.PopItemWidth()
         if textinput then
             self.CPU.breakpoint = tonumber(text, 16)
         end
-        imgui.SameLine()
-        imgui.Button("Set")
-        --for i = 0x200, #self.CPU.memory, 2 do
-        --    -- TODO handle odd byte boundaries
-        --    if i == self.CPU.pc or i + 1 == self.CPU.pc then
-        --        if self.followPC and not self.CPU.pause then
-        --            imgui.SetScrollHere()
-        --        end
-        --        imgui.Text("PC ")
-        --    elseif i == self.CPU.i or i + 1 == self.CPU.i then
-        --        imgui.Text(" I ")
-        --    else
-        --        local found = false
-        --        -- for j, s in ipairs(self.CPU.stack) do
-        --        --     if i == s or i + 1 == s then
-        --        --         imgui.Text("S" .. (j - 1) .. " ")
-        --        --         found = true
-        --        --     end
-        --        -- end
-        --        if not found then
-        --            imgui.Text("   ")
-        --        end
-        --    end
-        --    imgui.SameLine()
-        --    imgui.Text(string.format("%04X: ", i))
-        --    imgui.SameLine()
-        --    imgui.Text(string.format("%02X%02X", self.CPU.memory[i], self.CPU.memory[i + 1] or 0))
-        --end
+
+        imgui.BeginChild("##instructions")
+        local _, win_h = imgui.GetWindowSize()
+        local font_height = imgui.GetFontSize() + 4
+        local line = math.floor(imgui.GetScrollY() / font_height)
+        local j = 0
+        for i = 0, 0xFFFF do -- TODO only to the largest mapped memory?
+            if disassembler.memory[i] then
+                if i == self.CPU.registers.pc() then
+                    imgui.Text(">")
+                    if self.followPC then
+                        imgui.SetScrollHere()
+                    end
+                elseif i == self.CPU.breakpoint then
+                    imgui.Text("!")
+                else
+                    imgui.Text(" ")
+                end
+                -- Cull output so we don't bog down the UI
+                if j > line - 1 and j < line + (win_h / font_height) + 1 then
+                    imgui.SameLine()
+                    imgui.Text(string.format("%04X: ", i) .. disassembler.memory[i])
+                end
+                j = j + 1
+            end
+        end
+        imgui.EndChild()
         imgui.End()
     end
 
@@ -246,7 +254,7 @@ function ui:draw()
                 self.memoryScrollNow = false
             end
             -- Cull output so we don't bog down the UI
-            if i > line - 3 and i < line + (win_h / font_height) then
+            if i > line - 1 and i < line + (win_h / font_height) then
                 local c = self.CPU.memory[i]
                 imgui.Text(string.format("%04X: %02X %03d", i, c, c))
                 imgui.SameLine()
