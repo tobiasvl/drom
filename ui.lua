@@ -16,7 +16,11 @@ function ui:init(CPU)
     disassembler:disassemble(self.CPU.memory)
 
     self.canvases = {
-        display = love.graphics.newCanvas(64*8, 32*8)
+        display = love.graphics.newCanvas(64*8, 32*8),
+        speaker = love.graphics.newCanvas(60, 60),
+        speaker_mute = love.graphics.newCanvas(60, 60),
+        speaker_active = love.graphics.newCanvas(60, 60),
+        speaker_mute_active = love.graphics.newCanvas(60, 60)
     }
 
     self.shaders = {
@@ -31,6 +35,7 @@ function ui:init(CPU)
     self.showCPUWindow = true
     self.showInstructionsWindow = true
     self.showMemoryWindow = true
+    self.showSpeakerWindow = true
 
     self.memoryScroll = 0
     self.memoryScrollNow = false
@@ -45,6 +50,37 @@ function ui:init(CPU)
     self.effect.crt.distortionFactor = {1.02, 1.065}
     self.effect.glow.strength = 3
     self.effect.glow.min_luma = 0.9
+
+    self.speaker = {
+        mute = false,
+        volume = 1.0,
+        sound = love.audio.newSource("assets/1khz.wav", "static"),
+        image = love.graphics.newImage("assets/speaker.png"),
+        image_mute = love.graphics.newImage("assets/speaker-mute.png"),
+    }
+
+    -- This is unfortunate, but I haven't figured out a way to use
+    -- colors with imgui.Image (or imgui.ButtonImage), so I make lots
+    -- of canvases instead...
+    love.graphics.setCanvas(self.canvases.speaker)
+    love.graphics.draw(self.speaker.image, 0, 0, 0, 0.25, 0.25)
+    love.graphics.setCanvas()
+
+    love.graphics.setCanvas(self.canvases.speaker_mute)
+    love.graphics.draw(self.speaker.image_mute, 0, 0, 0, 0.25, 0.25)
+    love.graphics.setCanvas()
+
+    love.graphics.setColor(1, 0, 0, 1)
+
+    love.graphics.setCanvas(self.canvases.speaker_active)
+    love.graphics.draw(self.speaker.image, 0, 0, 0, 0.25, 0.25)
+    love.graphics.setCanvas()
+
+    love.graphics.setCanvas(self.canvases.speaker_mute_active)
+    love.graphics.draw(self.speaker.image_mute, 0, 0, 0, 0.25, 0.25)
+    love.graphics.setCanvas()
+
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 function ui:update(dt)
@@ -64,7 +100,36 @@ function ui:update(dt)
 end
 
 function ui:draw()
+    local sound_playing = bit.band(self.CPU.memory[0x8012], 0x40) ~= 0
+
+    if sound_playing and not self.speaker.mute then
+        self.speaker.sound:play()
+    end
+
     imgui.NewFrame()
+
+    if self.showSpeakerWindow then
+        imgui.SetNextWindowPos(0, 20, "ImGuiCond_FirstUseEver")
+        self.showSpeakerWindow = imgui.Begin("Speaker", true, { })--, { "ImGuiWindowFlags_AlwaysAutoResize" })
+
+        local toggle = false
+        if self.speaker.mute then
+            if sound_playing then
+                toggle = imgui.ImageButton(self.canvases.speaker_mute_active, 60, 60)
+            else
+                toggle = imgui.ImageButton(self.canvases.speaker_mute, 60, 60)
+            end
+        else
+            if sound_playing then
+                toggle = imgui.ImageButton(self.canvases.speaker_active, 60, 60)
+            else
+                toggle = imgui.ImageButton(self.canvases.speaker, 60, 60)
+            end
+        end
+        if toggle then self.speaker.mute = not self.speaker.mute end
+
+        imgui.End()
+    end
 
     if self.showDisplayWindow then
         imgui.SetNextWindowPos(0, 20, "ImGuiCond_FirstUseEver")
@@ -365,6 +430,9 @@ function ui:draw()
             end
             if imgui.MenuItem("Memory", nil, self.showMemoryWindow, true) then
                 self.showMemoryWindow = not self.showMemoryWindow
+            end
+            if imgui.MenuItem("Speaker", nil, self.showSpeakerWindow, true) then
+                self.showSpeakerWindow = not self.showSpeakerWindow
             end
             imgui.EndMenu()
         end
