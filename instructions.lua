@@ -374,12 +374,13 @@ function instructions:cmp(addr_mode, acc)
     self.cpu.registers.status.n = bit.band(result, 0x80) ~= 0
     self.cpu.registers.status.z = bit.band(result, 0xFF) == 0
     --self.cpu.registers.status.v -- TODO
-    self.cpu.registers.status.c = result > 0xFF
+    self.cpu.registers.status.c = result > 0xFF -- TODO incorrect
 end
 
 -- COM
 function instructions:com(addr_mode)
     local result = 0xFF - addr_mode() -- TODO?
+    self.cpu.registers.status.c = true
     self.cpu.registers.status.n = bit.band(result, 0x80) ~= 0
     self.cpu.registers.status.z = bit.band(result, 0xFF) == 0
     self.cpu.registers.status.v = false
@@ -435,6 +436,7 @@ function instructions:inc(addr_mode)
     self.cpu.registers.status.z = bit.band(result, 0xFF) == 0
     self.cpu.registers.status.v = addr_mode() == 0x7F
     -- manual says C not affected, but lists it as equivalent to Z; probable error
+    self.cpu.registers.status.c = self.cpu.registers.status.z
     addr_mode(result)
 end
 

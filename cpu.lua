@@ -138,6 +138,11 @@ function CPU:decode(opcode)
 end
 
 function CPU:execute(operation)--instruction, addr_mode, acc)
+    if not instructions[operation.addr_mode] then
+        -- unimplemented opcode, treat as NOP
+        self.pause = true -- TODO configurable pause
+        operation = instructions.opcodes[0x01]
+    end
     local addr_mode = instructions[operation.addr_mode](instructions, operation.acc)
     instructions[operation.instruction](instructions, addr_mode, operation.acc)--instruction(instructions, addr_mode, acc)
 
@@ -153,7 +158,7 @@ function CPU:cycle()
         else -- waiting != halted, so maybe move this
             if self.nmi then
                 self.nmi = false
-                self.registers.status.i = true -- ?
+                self.registers.status.i = true -- TODO ?
                 local n = self.memory.eprom.startAddress + self.memory.eprom.size - 1
                 self.registers.pc(bit.band(bit.lshift(self.memory[n - 3], 8), self.memory[n - 2]))
             elseif self.irq and not self.registers.status.i then
@@ -163,6 +168,7 @@ function CPU:cycle()
                 self.registers.pc(bit.band(bit.lshift(self.memory[n - 7], 8), self.memory[n - 6]))
             end
         end
+        return 1
     else
         if self.reset then
             self.reset = false

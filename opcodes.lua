@@ -959,7 +959,8 @@ return {
         acc = "a"
     },
     [0x9D] = {
-        instruction = "hcf"
+        instruction = "hcf",
+        addr_mode = "inh"
     },
     [0x9E] = {
         instruction = "lds",
@@ -1219,7 +1220,8 @@ return {
     [0xCD] = {
         -- TODO different kind of HCF
         -- https://x86.fr/investigating-the-halt-and-catch-fire-instruction-on-motorola-6800/
-        instruction = "hcf"
+        instruction = "hcf",
+        addr_mode = "inh"
     },
     [0xCE] = {
         instruction = "ldx",
@@ -1301,7 +1303,8 @@ return {
     },
     [0xDC] = {},
     [0xDD] = {
-        instruction = "hcf"
+        instruction = "hcf",
+        addr_mode = "inh"
     },
     [0xDE] = {
         instruction = "ldx",
@@ -1384,7 +1387,8 @@ return {
     [0xED] = {
         -- TODO different kind of HCF
         -- https://x86.fr/investigating-the-halt-and-catch-fire-instruction-on-motorola-6800/
-        instruction = "hcf"
+        instruction = "hcf",
+        addr_mode = "inh"
     },
     [0xEE] = {
         instruction = "ldx",
@@ -1467,7 +1471,8 @@ return {
     [0xFD] = {
         -- TODO slower HCF
         -- https://x86.fr/investigating-the-halt-and-catch-fire-instruction-on-motorola-6800/
-        instruction = "hcf"
+        instruction = "hcf",
+        addr_mode = "inh"
     },
     [0xFE] = {
         instruction = "ldx",
