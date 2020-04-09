@@ -108,13 +108,16 @@ function love.update(dt)
         while cycles < 1000000 / 50 and not CPU.pause do
             cycles = cycles + CPU:cycle()
             num_instructions = num_instructions + 1
-        end
-        cycles = cycles - (1000000 / 50)
-        CPU.drawflag = true
 
-        CPU.memory[0x8013] = bit.bor(CPU.memory[0x8013], 0x80)
-        --PIA sjekker selv IRQ-flagget sitt og sender IRQ til MPU...
-        CPU.irq = true
+        end
+        if cycles >= 1000000 / 50 then
+            cycles = cycles - (1000000 / 50)
+            --CPU.memory[0x8013] = bit.bor(CPU.memory[0x8013], 0x80)
+            --PIA should check its own interrupt flag and send IRQ til MPU...
+            CPU.irq = true
+        end
+
+        CPU.drawflag = true
 
         --for k, v in pairs(button_status) do
         --    CPU.key_status[k] = temp_key_status[k]
