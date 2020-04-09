@@ -33,6 +33,7 @@ function ui:init(CPU)
     self.showDisplayWindow = true
     self.showKeypadWindow = true
     self.showCPUWindow = true
+    self.showPIAWindow = true
     self.showInstructionsWindow = true
     self.showMemoryWindow = true
     self.showSpeakerWindow = true
@@ -100,7 +101,7 @@ function ui:update(dt)
 end
 
 function ui:draw()
-    local sound_playing = bit.band(self.CPU.memory[0x8012], 0x40) ~= 0
+    local sound_playing = bit.band(self.CPU.memory[0x8012], 0x40) ~= 0 -- TODO read from pins, not bus
 
     if sound_playing and not self.speaker.mute then
         self.speaker.sound:play()
@@ -225,6 +226,12 @@ function ui:draw()
         if self.CPU.reset then
             imgui.PopStyleColor()
         end
+        imgui.End()
+    end
+
+    if self.showPIAWindow then
+        imgui.SetNextWindowSize(200, 200, "ImGuiCond_FirstUseEver")
+        self.showPIAWindow = imgui.Begin("PIA", true)
         imgui.End()
     end
 
@@ -421,6 +428,9 @@ function ui:draw()
             end
             if imgui.MenuItem("CPU", nil, self.showCPUWindow, false) then
                 self.showCPUWindow = not self.showCPUWindow
+            end
+            if imgui.MenuItem("PIA", nil, self.showPIAWindow, false) then
+                self.showPIAWindow = not self.showPIAWindow
             end
             if imgui.MenuItem("Keypad", nil, self.showKeypadWindow, true) then
                 self.showKeypadWindow = not self.showKeypadWindow

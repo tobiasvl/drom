@@ -1,117 +1,105 @@
-local memory_module = setmetatable({}, {
-    __call = function(self, startAddress, size)
-        return setmetatable({
-            startAddress = startAddress,
-            size = size
-        }, {
-            __len = function(self) return self.size end, -- LuaJIT doesn't support this? :(
-            __index = function() return 0 end -- TODO uninitialized?
-        })
-    end,
-})
+local function memory_module(startAddress, size)
+    return setmetatable({
+        startAddress = startAddress,
+        size = size
+    }, {
+        __len = function(self) return self.size end, -- LuaJIT doesn't support this? :(
+        __index = function() return 0 end -- TODO uninitialized?
+    })
+end
 
-local pia = setmetatable({}, {
-    __call = function(self, a, b)
-        return {
-            a = {
-                peripheral = a,
-                port_mode = "ddr",
-                data = 0,
-                ddr = 0x0,
-                port = function(self, newValue)
-                    if self.port_mode == "data" then
-                        if newValue then
-                            if self.peripheral then
-                                self.data = bit.band(self.peripheral(newValue), self.direction_mask)
-                            end
-                        else
-                            self.irq1 = false
-                            self.irq2 = false
-                            return bit.band(self.data, bit.bxor(self.ddr, 0xFF)) or 0
-                        end
-                    elseif self.port_mode == "ddr" then
-                        if newValue then
-                            self.ddr = newValue
-                        else
-                            return self.ddr
-                        end
-                    end
-                end,
-                control = function(self, bits)
-                    if bits then
-                        self.irq1_enabled = bit.band(bits, 0x01) ~= 0
-                        --self.irq = bit.band(bits, 0x02) ~= 0
-                        self.port_mode = bit.band(bits, 0x04) == 0 and "ddr" or "data"
-                        --self.port_mode = bit.band(bits, 0x38) == 0 and "ddr" or "data"
-                        --self.irq2 = bit.band(bits, 0x40) ~= 0
-                        self.irq1 = bit.band(bits, 0x80) ~= 0
-                    else
-                        local control = self.irq1 and 1 or 0
-                        control = bit.lshift(control, 1)
-                        control = bit.bor(control, self.irq2 and 1 or 0)
-                        control = bit.lshift(control, 3)
-                        --control = bit.bor(control, self.port_mode == "data" and 1 or 0)
-                        control = bit.lshift(control, 1)
-                        control = bit.bor(control, self.port_mode == "data" and 1 or 0)
-                        control = bit.lshift(control, 1)
-                        control = bit.bor(control, self.irq1_invert and 1 or 0)
-                        control = bit.lshift(control, 1)
-                        control = bit.bor(control, self.irq1_enabled and 1 or 0)
-                        return control
-                    end
-                end
+local function pia_port(peripheral)
+    local self = {
+        peripheral = peripheral,
+        output_register = 0,
+        ddr = 0x00,
+        data_pins = 0,
+        peripheral_pins = 0,
+        input = 0,
+        control = {
+            irq1 = false,
+            irq2 = false,
+            c2 = {
+                foo = false,
+                bar = false,
+                baz = false
             },
-            b = {
-                peripheral = b,
-                port_mode = "ddr",
-                data = 0,
-                ddr = 0x0,
-                port = function(self, newValue)
-                    if self.port_mode == "data" then
-                        if newValue then
-                            if self.peripheral then
-                                self.data = bit.band(self.peripheral(newValue), self.direction_mask)
-                            end
-                        else
-                            self.irq1 = false
-                            self.irq2 = false
-                            return bit.band(self.data, bit.bxor(self.ddr, 0xFF)) or 0
-                        end
-                    elseif self.port_mode == "ddr" then
-                        if newValue then
-                            self.ddr = newValue
-                        else
-                            return self.ddr
-                        end
-                    end
-                end,
-                control = function(self, bits)
-                    if bits then
-                        self.irq1_enabled = bit.band(bits, 0x01) ~= 0
-                        --self.irq = bit.band(bits, 0x02) ~= 0
-                        self.port_mode = bit.band(bits, 0x04) == 0 and "ddr" or "data"
-                        --self.port_mode = bit.band(bits, 0x38) == 0 and "ddr" or "data"
-                        --self.irq2 = bit.band(bits, 0x40) ~= 0
-                        self.irq1 = bit.band(bits, 0x80) ~= 0
-                    else
-                        local control = 1--self.irq1 and 1 or 0
-                        control = bit.lshift(control, 1)
-                        control = bit.bor(control, self.irq2 and 1 or 0)
-                        control = bit.lshift(control, 3)
-                        --control = bit.bor(control, self.port_mode == "data" and 1 or 0)
-                        control = bit.lshift(control, 1)
-                        control = bit.bor(control, self.port_mode == "data" and 1 or 0)
-                        control = bit.lshift(control, 1)
-                        control = bit.bor(control, self.irq1_invert and 1 or 0)
-                        control = bit.lshift(control, 1)
-                        control = bit.bor(control, self.irq1_enabled and 1 or 0)
-                        return control
-                    end
-                end
+            ddr_access = false,
+            c1 = {
+                invert = false,
+                enable = false
             }
         }
-    end,
-})
+    }
+
+    return setmetatable({}, {
+        __index = function(_, poop)
+            if poop == "irq" then
+                return self.control.irq1 -- TODO choose IRQ
+            elseif poop == "data" then
+                if self.control.ddr_access then
+                    return self.ddr
+                else
+                    self.control.irq1 = false
+                    self.control.irq2 = false
+                    
+                    --return bit.band(self.peripheral_pins, bit.band(bit.bnot(self.ddr), 0xFF)) -- TODO A?
+                    return self.peripheral_pins -- TODO this is how B works?
+                end
+            elseif poop == "control" then
+                local control = self.control.irq1 and 1 or 0
+                control = bit.lshift(control, 1)
+                control = bit.bor(control, self.control.irq2 and 1 or 0)
+                control = bit.lshift(control, 3)
+                --control = bit.bor(control, self.port_mode == "data" and 1 or 0)
+                control = bit.lshift(control, 1)
+                control = bit.bor(control, self.control.ddr_access and 0 or 1)
+                control = bit.lshift(control, 1)
+                control = bit.bor(control, self.control.c1.invert and 1 or 0)
+                control = bit.lshift(control, 1)
+                control = bit.bor(control, self.control.c1.enable and 1 or 0)
+                return control
+            end
+        end,
+        __newindex = function(_, poop, newValue)
+            if poop == "c1" then
+                if newValue then self.control.irq1 = true end
+            elseif poop == "c2" then
+                if newValue then self.control.irq2 = true end
+            elseif poop == "control" then
+                self.control.c1.enable = bit.band(newValue, 0x01) ~= 0
+                self.control.c1.invert = bit.band(newValue, 0x02) ~= 0
+                self.control.ddr_access = bit.band(newValue, 0x04) == 0
+                --self.port_mode = bit.band(bits, 0x38) == 0 and "ddr" or "data"
+            elseif poop == "p" then
+                self.input = bit.band(newValue, 0xFF)
+                self.peripheral_pins = bit.band(newValue, bit.band(bit.bnot(self.ddr), 0xFF))
+                self.peripheral_pins = bit.bor(self.peripheral_pins, bit.band(self.output_register, self.ddr))
+            elseif poop == "rs" then
+                self:reset()
+            elseif poop == "data" then
+                if self.control.ddr_access then
+                    self.ddr = bit.band(newValue, 0xFF)
+                    self.peripheral_pins = bit.band(self.input, bit.band(bit.bnot(self.ddr), 0xFF))
+                    self.peripheral_pins = bit.bor(self.peripheral_pins, bit.band(self.output_register, self.ddr))
+                else
+                    self.output_register = bit.band(newValue, 0xFF)
+                    self.peripheral_pins = bit.band(self.input, bit.band(bit.bnot(self.ddr), 0xFF))
+                    self.peripheral_pins = bit.bor(self.peripheral_pins, bit.band(self.output_register, self.ddr))
+                end
+            else
+                return
+            end
+        end
+    })
+end
+
+local function pia(a, b)
+    return {
+        a = pia_port(a),
+        b = pia_port(b)
+    }
+end
 
 local memory = setmetatable({
     ram = memory_module(0x0000, 0x0FFF),
@@ -131,13 +119,13 @@ local memory = setmetatable({
         if address < 0x0FFF then
             return self.ram[address - self.ram.startAddress]
         elseif address == 0x8010 then
-            return self.pia.a:port()
+            return self.pia.a.data -- TODO
         elseif address == 0x8011 then
-            return self.pia.a:control()
+            return self.pia.a.control
         elseif address == 0x8012 then
-            return self.pia.b:port()
+            return self.pia.b.data
         elseif address == 0x8013 then
-            return self.pia.b:control()
+            return self.pia.b.control
         elseif address >= 0xC000 and address < 0xC400 then
             return self.eprom[address - self.eprom.startAddress]
         else
@@ -153,13 +141,13 @@ local memory = setmetatable({
         if address < 0x0FFF then
             rawset(self.ram, address, bit.band(newValue, 0xFF))
         elseif address == 0x8010 then
-            self.pia.a:port(newValue)
+            self.pia.a.data = newValue
         elseif address == 0x8011 then
-            self.pia.a:control(newValue)
+            self.pia.a.control = newValue
         elseif address == 0x8012 then
-            self.pia.b:port(newValue)
+            self.pia.b.data = newValue
         elseif address == 0x8013 then
-            self.pia.b:control(newValue)
+            self.pia.b.control = newValue
         elseif address >= 0xC000 and address < 0xC400 then
             print("Attempted write at ROM address " .. string.format("%04X", address) .. " with value " .. newValue)
             self.eprom[address - self.eprom.startAddress] = newValue

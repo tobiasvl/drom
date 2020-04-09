@@ -1,5 +1,6 @@
 local CPU = require 'cpu'
 local UI = require 'ui'
+local keypad = require 'keypad'
 
 local conf = require "conf"
 local t = {modules = {}, window = {}}
@@ -9,54 +10,10 @@ local debug = t.console
 num_instructions = 0
 cycles = 0
 
-local keys_cosmac = {
-    0x1,
-    0x2,
-    0x3,
-    0xC,
-    0x4,
-    0x5,
-    0x6,
-    0xD,
-    0x7,
-    0x8,
-    0x9,
-    0xE,
-    0xA,
-    0x0,
-    0xB,
-    0xF
-}
-
-local keys_qwerty = {
-    "1",
-    "2",
-    "3",
-    "4",
-    "q",
-    "w",
-    "e",
-    "r",
-    "a",
-    "s",
-    "d",
-    "f",
-    "z",
-    "x",
-    "c",
-    "v"
-}
-
-local key_mapping = {}
-local button_status = {}
-for k, v in pairs(keys_cosmac) do
-    key_mapping[keys_qwerty[k]] = v
-    button_status[v] = false
-end
-
 local shaders = {}
 
 local romfile
+
 
 function love.load(arg)
     --min_dt = 1/60--60 --fps
@@ -64,6 +21,7 @@ function love.load(arg)
     --debug.debug()
 
     CPU:init()
+    keypad:connect(CPU.memory.pia.a)
 
     CPU.pause = true
 
@@ -78,7 +36,7 @@ function love.load(arg)
         CPU.rom_loaded = false
     end
     file:close()
-    
+
     UI:init(CPU)
 end
 
@@ -141,37 +99,13 @@ end
 function love.keypressed(key)
     imgui.KeyPressed(key)
     if not imgui.GetWantCaptureKeyboard() then
-        if key_mapping[key] then
-            CPU.key_status[key_mapping[key]] = true
-            --CPU.irq = true
-            CPU.memory[0x8011] = bit.bor(CPU.memory[0x8011], 0x80)
-            local key_bits = {
-                ["0"] = 0x00010001,
-                ["1"] = 0x00010010,
-                ["2"] = 0x00010100,
-                ["3"] = 0x00011000,
-                ["4"] = 0x00100001,
-                ["5"] = 0x00100010,
-                ["6"] = 0x00100100,
-                ["7"] = 0x00101000,
-                ["8"] = 0x01000001,
-                ["9"] = 0x01000010,
-                ["A"] = 0x01000100,
-                ["B"] = 0x01001000,
-                ["C"] = 0x10000001,
-                ["D"] = 0x10000010,
-                ["E"] = 0x10000100,
-                ["F"] = 0x10001000
-            }
-            CPU.memory[0x8010] = bit.band(bit.bxor(key_bits[key], 0xFF), 0xFF)
-            --CPU.memory[0x8010] = key_bits[key]
-        elseif key == "lshift" or key == "rshift" then
-            CPU.memory[0x8013] = bit.bor(CPU.memory[0x8013], 0x40)
+        keypad:keypressed(key)
+        if key == "space" then
+            CPU.pause = not CPU.pause
         elseif key == "escape" then
             CPU.reset = true
         end
 
-        if key == "space" then CPU.pause = not CPU.pause end
         if CPU.pause and key == "right" then
             --next_time = next_time + min_dt
             --cycles = cycles + CPU:execute(CPU:decode(CPU:fetch()))
@@ -180,8 +114,7 @@ function love.keypressed(key)
             num_instructions = num_instructions + 1
             if cycles >= 1000000 / 50 then
                 cycles = cycles - (1000000 / 50)
-                CPU.memory[0x8013] = bit.bor(CPU.memory[0x8013], 0x80)
-                --PIA sjekker selv IRQ-flagget sitt og sender IRQ til MPU...
+                --CPU.memory[0x8013] = bit.bor(CPU.memory[0x8013], 0x80)
                 CPU.irq = true
             end
         end
@@ -191,9 +124,7 @@ end
 function love.keyreleased(key)
     imgui.KeyReleased(key)
     if not imgui.GetWantCaptureKeyboard() then
-        if key_mapping[key] then
-            CPU.key_status[key_mapping[key]] = false
-        end
+        keypad:keyreleased(key)
     end
 end
 

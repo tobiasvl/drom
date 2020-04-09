@@ -74,17 +74,6 @@ function CPU:init()
 
     self.reset = true
     self.instructions = 0
-
-    for i=0x0,0xF do
-        self.key_status[i] = false
-    end
-
-    --for x=0,63 do
-        --self.screen[x] = {}
-        --for y=0,31 do
-        --    screen[x][y] = 0
-        --end
-    --end
 end
 
 function CPU:read_rom(file)
