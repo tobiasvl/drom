@@ -10,8 +10,9 @@ local hex_input_flags = {
     "ImGuiInputTextFlags_EnterReturnsTrue"
 }
 
-function ui:init(CPU)
+function ui:init(CPU, keypad)
     self.CPU = CPU
+    self.keypad = keypad
 
     disassembler:disassemble(self.CPU.memory)
 
@@ -395,23 +396,42 @@ function ui:draw()
             imgui.EndMenuBar()
         end
         local win_w, win_h = imgui.GetWindowSize()
-        imgui.PushButtonRepeat(true)
-        --for k, v in pairs(keys_cosmac) do
-        --    if self.CPU.key_status[v] then
-        --        imgui.PushStyleColor("ImGuiCol_Button", 117 / 255, 138 / 255, 204 / 255, 1)
-        --        button_status[v] = imgui.Button(string.format("%X", v), (win_w / 5), (win_h / 5) - 5)
-        --        imgui.PopStyleColor(1)
-        --    else
-        --        button_status[v] = imgui.Button(string.format("%X", v), (win_w / 5), (win_h / 5) - 4)
-        --    end
-        --    if imgui.IsItemHovered() then
-        --        imgui.SetTooltip(keys_qwerty[k])
-        --    end
-        --    if k % 4 ~= 0 then
-        --        imgui.SameLine()
-        --    end
-        --end
-        imgui.PopButtonRepeat()
+        local but_w, but_h = (win_w / 4) - 5, (win_h / 5) - (7 * 2)
+        for k = 0, 15 do
+            local v = self.keypad.keys_dream[k]
+            local button_pressed = false
+            if self.keypad.key_status[v] then
+                button_pressed = true
+                imgui.PushStyleColor("ImGuiCol_Button", 117 / 255, 138 / 255, 204 / 255, 1)
+            end
+            self.keypad.button_status[v] = imgui.Button(string.format("%X", v), but_w, but_h)
+            if self.keypad.button_status[v] then
+                self.keypad:keypressed(self.keypad.keys_qwerty[k])
+            end
+            if button_pressed then
+                imgui.PopStyleColor(1)
+            end
+            if imgui.IsItemHovered() then
+                imgui.SetTooltip(self.keypad.keys_qwerty[k])
+            end
+            if (k + 1) % 4 ~= 0 then
+                imgui.SameLine(0, 4)
+            end
+        end
+        imgui.Dummy(0, 2)
+        if imgui.Button("FN", (but_w * 2) + 4, but_h) then
+            self.keypad:keypressed("lshift")
+        end
+        if imgui.IsItemHovered() then
+            imgui.SetTooltip("shift")
+        end
+        imgui.SameLine(0, 4)
+        if imgui.Button("RESET", (but_w * 2) + 4, but_h) then
+            self.CPU.reset = true
+        end
+        if imgui.IsItemHovered() then
+            imgui.SetTooltip("escape")
+        end
         imgui.End()
     end
 

@@ -35,6 +35,7 @@ keypad.key_bits = {
 
 keypad.key_mapping = {}
 keypad.key_status = {}
+keypad.button_status = {}
 
 for i = 0, 15 do
     keypad.key_mapping[keypad.keys_qwerty[i]] = keypad.keys_dream[i]

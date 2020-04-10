@@ -37,7 +37,7 @@ function love.load(arg)
     end
     file:close()
 
-    UI:init(CPU)
+    UI:init(CPU, keypad)
 end
 
 function love.filedropped(file)
@@ -56,17 +56,9 @@ end
 
 function love.update(dt)
     if not CPU.pause then
-        --local temp_key_status = {}
-        --for k, v in pairs(button_status) do
-        --    temp_key_status[k] = CPU.key_status[k]
-        --    if v then
-        --        CPU.key_status[k] = v
-        --    end
-        --end
         while cycles < 1000000 / 50 and not CPU.pause do
             cycles = cycles + CPU:cycle()
             num_instructions = num_instructions + 1
-
         end
         if cycles >= 1000000 / 50 then
             cycles = cycles - (1000000 / 50)
@@ -74,12 +66,14 @@ function love.update(dt)
             --PIA should check its own interrupt flag and send IRQ til MPU...
             CPU.irq = true
         end
+        for k, v in pairs(keypad.button_status) do
+            if v then
+                keypad:keyreleased(keypad.keys_qwerty[k])
+            end
+        end
 
         CPU.drawflag = true
 
-        --for k, v in pairs(button_status) do
-        --    CPU.key_status[k] = temp_key_status[k]
-        --end
     end
 end
 
