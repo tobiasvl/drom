@@ -2,6 +2,8 @@ local imgui = require "imgui"
 local moonshine = require 'moonshine'
 local disassembler = require "disassembler"
 
+local lg = love.graphics
+
 local ui = {}
 
 local hex_input_flags = {
@@ -17,11 +19,11 @@ function ui:init(CPU, keypad)
     disassembler:disassemble(self.CPU.memory)
 
     self.canvases = {
-        display = love.graphics.newCanvas(64*8, 32*8),
-        speaker = love.graphics.newCanvas(60, 60),
-        speaker_mute = love.graphics.newCanvas(60, 60),
-        speaker_active = love.graphics.newCanvas(60, 60),
-        speaker_mute_active = love.graphics.newCanvas(60, 60)
+        display = lg.newCanvas(64*8, 32*8),
+        speaker = lg.newCanvas(60, 60),
+        speaker_mute = lg.newCanvas(60, 60),
+        speaker_active = lg.newCanvas(60, 60),
+        speaker_mute_active = lg.newCanvas(60, 60)
     }
 
     self.shaders = {
@@ -57,32 +59,32 @@ function ui:init(CPU, keypad)
         mute = false,
         volume = 1.0,
         sound = love.audio.newSource("assets/1khz.wav", "static"),
-        image = love.graphics.newImage("assets/speaker.png"),
-        image_mute = love.graphics.newImage("assets/speaker-mute.png"),
+        image = lg.newImage("assets/speaker.png"),
+        image_mute = lg.newImage("assets/speaker-mute.png"),
     }
 
     -- This is unfortunate, but I haven't figured out a way to use
     -- colors with imgui.Image (or imgui.ButtonImage), so I make lots
     -- of canvases instead...
-    love.graphics.setCanvas(self.canvases.speaker)
-    love.graphics.draw(self.speaker.image, 0, 0, 0, 0.25, 0.25)
-    love.graphics.setCanvas()
+    lg.setCanvas(self.canvases.speaker)
+    lg.draw(self.speaker.image, 0, 0, 0, 0.25, 0.25)
+    lg.setCanvas()
 
-    love.graphics.setCanvas(self.canvases.speaker_mute)
-    love.graphics.draw(self.speaker.image_mute, 0, 0, 0, 0.25, 0.25)
-    love.graphics.setCanvas()
+    lg.setCanvas(self.canvases.speaker_mute)
+    lg.draw(self.speaker.image_mute, 0, 0, 0, 0.25, 0.25)
+    lg.setCanvas()
 
-    love.graphics.setColor(1, 0, 0, 1)
+    lg.setColor(1, 0, 0, 1)
 
-    love.graphics.setCanvas(self.canvases.speaker_active)
-    love.graphics.draw(self.speaker.image, 0, 0, 0, 0.25, 0.25)
-    love.graphics.setCanvas()
+    lg.setCanvas(self.canvases.speaker_active)
+    lg.draw(self.speaker.image, 0, 0, 0, 0.25, 0.25)
+    lg.setCanvas()
 
-    love.graphics.setCanvas(self.canvases.speaker_mute_active)
-    love.graphics.draw(self.speaker.image_mute, 0, 0, 0, 0.25, 0.25)
-    love.graphics.setCanvas()
+    lg.setCanvas(self.canvases.speaker_mute_active)
+    lg.draw(self.speaker.image_mute, 0, 0, 0, 0.25, 0.25)
+    lg.setCanvas()
 
-    love.graphics.setColor(1, 1, 1, 1)
+    lg.setColor(1, 1, 1, 1)
 end
 
 function ui:update(dt)
@@ -160,10 +162,10 @@ function ui:draw()
         end
 --        local win_x, win_y = imgui.GetWindowSize()
         if self.CPU.display and self.CPU.drawflag then
-            love.graphics.setCanvas(self.canvases.display)
-            love.graphics.clear()
+            lg.setCanvas(self.canvases.display)
+            lg.clear()
             self.effect(function()
-                love.graphics.setColor(1,1,1)
+                lg.setColor(1,1,1)
                 for y = 0, 31 do
                     for x = 0, 7 do
                         local byte = self.CPU.memory[0x100 + (y * 8) + x]
@@ -171,13 +173,13 @@ function ui:draw()
                             local pixel = bit.band(byte, 0x80)
                             byte = bit.lshift(byte, 1)
                             if pixel ~= 0 then
-                                love.graphics.rectangle("fill", (x * 64) + (xx * 8), y * 8, 8, 8)
+                                lg.rectangle("fill", (x * 64) + (xx * 8), y * 8, 8, 8)
                             end
                         end
                     end
                 end
             end)
-            love.graphics.setCanvas()
+            lg.setCanvas()
             self.CPU.drawflag = false
         end
         imgui.Image(self.canvases.display, 64*8 + 8, 32*8)
