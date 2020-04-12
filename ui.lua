@@ -385,13 +385,17 @@ function ui:draw()
         self.showKeypadWindow = imgui.Begin("Keypad", true, { "NoScrollbar", "MenuBar" })
         if imgui.BeginMenuBar() then
             if imgui.BeginMenu("Layout") then
-                imgui.MenuItem("DREAM 6800", nil, false, false)
-                if imgui.IsItemHovered() then
-                    imgui.SetTooltip("DREAM 6800 assembled in Electronics Australia, and 40th anniversary reproduction")
+                if imgui.MenuItem("Digitran", nil, self.keypad.keys_dream == self.keypad.keys_digitran, true) then
+                    self.keypad.keys_dream = self.keypad.keys_digitran
                 end
-                imgui.MenuItem("DREAM 6800 prototype", nil, false, false)
                 if imgui.IsItemHovered() then
-                    imgui.SetTooltip("DREAM 6800 prototype and the CHIP-8 Classic Computer")
+                    imgui.SetTooltip("Used in the DREAMER newsletter and the 40th anniversary DREAM reproduction")
+                end
+                if imgui.MenuItem("Original", nil, self.keypad.keys_dream == self.keypad.keys_original, true) then
+                    self.keypad.keys_dream = self.keypad.keys_original
+                end
+                if imgui.IsItemHovered() then
+                    imgui.SetTooltip("Used by the original and prototype DREAM 6800, and the CHIP-8 Classic Computer")
                 end
                 imgui.EndMenu()
             end
@@ -400,14 +404,13 @@ function ui:draw()
         local win_w, win_h = imgui.GetWindowSize()
         local but_w, but_h = (win_w / 4) - 5, (win_h / 5) - (7 * 2)
         for k = 0, 15 do
-            local v = self.keypad.keys_dream[k]
             local button_pressed = false
-            if self.keypad.key_status[v] then
+            if self.keypad.key_status[k] then
                 button_pressed = true
                 imgui.PushStyleColor("ImGuiCol_Button", 117 / 255, 138 / 255, 204 / 255, 1)
             end
-            self.keypad.button_status[v] = imgui.Button(string.format("%X", v), but_w, but_h)
-            if self.keypad.button_status[v] then
+            self.keypad.button_status[k] = imgui.Button(string.format("%X", self.keypad.keys_dream.layout[k]), but_w, but_h)
+            if self.keypad.button_status[k] then
                 self.keypad:keypressed(self.keypad.keys_qwerty[k])
             end
             if button_pressed then
@@ -448,10 +451,10 @@ function ui:draw()
             if imgui.MenuItem("Display", nil, self.showDisplayWindow, false) then
                 self.showDisplayWindow = not self.showDisplayWindow
             end
-            if imgui.MenuItem("CPU", nil, self.showCPUWindow, false) then
+            if imgui.MenuItem("CPU", nil, self.showCPUWindow, true) then
                 self.showCPUWindow = not self.showCPUWindow
             end
-            if imgui.MenuItem("PIA", nil, self.showPIAWindow, false) then
+            if imgui.MenuItem("PIA", nil, self.showPIAWindow, true) then
                 self.showPIAWindow = not self.showPIAWindow
             end
             if imgui.MenuItem("Keypad", nil, self.showKeypadWindow, true) then
