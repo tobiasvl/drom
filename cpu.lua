@@ -1,29 +1,27 @@
 local bit = bit or require 'bit32'
 local instructions = require 'instructions'
 
-local register = setmetatable({}, {
-    __call = function(self, mask)
-        return setmetatable({
-            value = 0,
-            prev_value = 0,
-            prev_inst = 0,
-            mask = mask or 0xFF
-        }, {
-            __call = function(self, newValue)
-                if newValue then
-                    self.prev_value = self.value
-                    self.prev_inst = num_instructions
-                    self.value = bit.band(newValue, self.mask)
-                else
-                    return self.value
-                end
-            end,
-            __tostring = function(self)
-                return string.format(mask == 0xFF and "%02X" or "%04X", self.value)
+local function register(mask)
+    return setmetatable({
+        value = 0,
+        prev_value = 0,
+        prev_inst = 0,
+        mask = mask or 0xFF
+    }, {
+        __call = function(self, newValue)
+            if newValue then
+                self.prev_value = self.value
+                self.prev_inst = num_instructions
+                self.value = bit.band(newValue, self.mask)
+            else
+                return self.value
             end
-        })
-    end
-})
+        end,
+        __tostring = function(self)
+            return string.format(mask == 0xFF and "%02X" or "%04X", self.value)
+        end
+    })
+end
 
 local status = setmetatable({
     i = true -- TODO ??
@@ -126,14 +124,14 @@ function CPU:decode(opcode)
     return instructions.opcodes[opcode]
 end
 
-function CPU:execute(operation)--instruction, addr_mode, acc)
+function CPU:execute(operation)
     if not instructions[operation.addr_mode] then
         -- unimplemented opcode, treat as NOP
         self.pause = true -- TODO configurable pause
         operation = instructions.opcodes[0x01]
     end
     local addr_mode = instructions[operation.addr_mode](instructions, operation.acc)
-    instructions[operation.instruction](instructions, addr_mode, operation.acc)--instruction(instructions, addr_mode, acc)
+    instructions[operation.instruction](instructions, addr_mode, operation.acc)
 
     --print(operation.instruction .. " " .. (operation.acc or "") .. (addr_mode() and string.format(" %04X", addr_mode()) or ""))
 
@@ -144,7 +142,7 @@ function CPU:cycle()
     if self.halt then
         if self.catch_fire then
             self:fetch()
-        else -- waiting != halted, so maybe move this
+        else -- TODO waiting != halted, so maybe move this
             if self.nmi then
                 self.nmi = false
                 self.registers.status.i = true -- TODO ?

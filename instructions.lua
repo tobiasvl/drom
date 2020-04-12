@@ -3,7 +3,7 @@ local bit = bit or require "bit32"
 local instructions = {}
 
 -- Addressing
-function instructions:inh()
+function instructions.inh()
     return function() end
 end
 
@@ -20,24 +20,16 @@ end
 function instructions:imm()
     local pc = self.cpu.registers.pc()
     self.cpu.registers.pc(pc + 1)
-    return function()--(newValue)
-        --if newValue then
-        --    self.cpu.memory[pc] = bit.band(newValue, 0xFF)
-        --else
-            return self.cpu.memory[pc]
-        --end
+    return function()
+        return self.cpu.memory[pc]
     end
 end
 
 function instructions:imm16()
     local pc = self.cpu.registers.pc()
     self.cpu.registers.pc(pc + 2)
-    return function()--(newValue)
-        --if newValue then
-        --    self.cpu.memory[pc], self.cpu.memory[pc + 1] = bit.rshift(bit.band(newValue, 0xFFFF), 8), bit.band(newValue, 0xFF)
-        --else
-            return bit.bor(bit.lshift(self.cpu.memory[pc], 8), self.cpu.memory[pc + 1])
-        --end
+    return function()
+        return bit.bor(bit.lshift(self.cpu.memory[pc], 8), self.cpu.memory[pc + 1])
     end
 end
 
@@ -61,7 +53,6 @@ function instructions:dir16()
             self.cpu.memory[self.cpu.memory[pc]], self.cpu.memory[self.cpu.memory[pc] + 1] = bit.rshift(bit.band(newValue, 0xFFFF), 8), bit.band(newValue, 0xFF)
         else
             return bit.bor(bit.lshift(self.cpu.memory[self.cpu.memory[pc]], 8), self.cpu.memory[self.cpu.memory[pc] + 1])
-            -- TODO is this right??
         end
     end
 end
@@ -72,13 +63,8 @@ function instructions:ext()
     return function(newValue)
         if newValue then
             self.cpu.memory[bit.bor(bit.lshift(self.cpu.memory[pc], 8), self.cpu.memory[pc + 1])] = bit.band(newValue, 0xFF)
-            --self.cpu.memory[self.cpu.memory[pc]], self.cpu.memory[self.cpu.memory[pc + 1]] = bit.rshift(bit.band(newValue, 0xFFFF), 8), bit.band(newValue, 0xFF)
         else
             return self.cpu.memory[bit.bor(bit.lshift(self.cpu.memory[pc], 8), self.cpu.memory[pc + 1])]
-            --return bit.bor(bit.lshift(self.cpu.memory[pc], 8), self.cpu.memory[pc + 1])
-            --return bit.bor(bit.lshift(self.cpu.memory[self.cpu.memory[pc]], 8), self.cpu.memory[self.cpu.memory[pc + 1]])
-            --return bit.bor(bit.lshift(self.cpu.memory[pc], 8), self.cpu.memory[pc + 1])
-            -- TODO check all instances of EXT to see if it expects memory contents (some will)
         end
     end
 end
@@ -110,12 +96,8 @@ end
 function instructions:immx()
     local pc = self.cpu.registers.pc()
     self.cpu.registers.pc(pc + 1)
-    return function(newValue)
-        --if newValue then
-        --    self.cpu.memory[self.cpu.registers.ix() + self.cpu.memory[pc]] = bit.band(newValue, 0xFF)
-        --else
-            return self.cpu.registers.ix() + self.cpu.memory[pc]
-        --end
+    return function()
+        return self.cpu.registers.ix() + self.cpu.memory[pc]
     end
 end
 

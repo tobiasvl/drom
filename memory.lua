@@ -42,7 +42,6 @@ local function pia_port(peripheral)
                 else
                     self.control.irq1 = false
                     self.control.irq2 = false
-                    
                     --return bit.band(self.peripheral_pins, bit.band(bit.bnot(self.ddr), 0xFF)) -- TODO A?
                     return self.peripheral_pins -- TODO this is how B works?
                 end
@@ -51,6 +50,7 @@ local function pia_port(peripheral)
                 control = bit.lshift(control, 1)
                 control = bit.bor(control, self.control.irq2 and 1 or 0)
                 control = bit.lshift(control, 3)
+                -- TODO:
                 --control = bit.bor(control, self.port_mode == "data" and 1 or 0)
                 control = bit.lshift(control, 1)
                 control = bit.bor(control, self.control.ddr_access and 0 or 1)
@@ -70,6 +70,7 @@ local function pia_port(peripheral)
                 self.control.c1.enable = bit.band(newValue, 0x01) ~= 0
                 self.control.c1.invert = bit.band(newValue, 0x02) ~= 0
                 self.control.ddr_access = bit.band(newValue, 0x04) == 0
+                -- TODO:
                 --self.port_mode = bit.band(bits, 0x38) == 0 and "ddr" or "data"
             elseif poop == "p" then
                 self.input = bit.band(newValue, 0xFF)
