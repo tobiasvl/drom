@@ -389,13 +389,19 @@ function ui:draw()
                     self.keypad.keys_dream = self.keypad.keys_digitran
                 end
                 if imgui.IsItemHovered() then
-                    imgui.SetTooltip("Used in the DREAMER newsletter and the 40th anniversary DREAM reproduction")
+                    imgui.SetTooltip("Used in many DREAM builds; de facto standard.\nStandard layout in the DREAMER newsletter.\nAlso used by the 40th anniversary DREAM reproduction")
                 end
                 if imgui.MenuItem("Original", nil, self.keypad.keys_dream == self.keypad.keys_original, true) then
                     self.keypad.keys_dream = self.keypad.keys_original
                 end
                 if imgui.IsItemHovered() then
-                    imgui.SetTooltip("Used by the original and prototype DREAM 6800, and the CHIP-8 Classic Computer")
+                    imgui.SetTooltip("The layout used in the Electronics Australia articles.\nUsed by the prototype DREAM 6800, and the CHIP-8 Classic Computer.")
+                end
+                if imgui.MenuItem("COSMAC VIP", nil, self.keypad.keys_dream == self.keypad.keys_cosmac, true) then
+                    self.keypad.keys_dream = self.keypad.keys_cosmac
+                end
+                if imgui.IsItemHovered() then
+                    imgui.SetTooltip("Used by RCA's COSMAC VIP, the DREAM's predecessor.\nUseful for CHIP-8 compatibility.")
                 end
                 imgui.EndMenu()
             end
@@ -404,6 +410,11 @@ function ui:draw()
         local win_w, win_h = imgui.GetWindowSize()
         local but_w, but_h = (win_w / 4) - 5, (win_h / 5) - (7 * 2)
         for k = 0, 15 do
+            -- TODO this can't be right
+            if self.keypad.button_status[k] then
+                self.keypad.button_status[k] = false
+                self.keypad:keyreleased(nil, self.keypad.keys_qwerty[k])
+            end
             local button_pressed = false
             if self.keypad.key_status[k] then
                 button_pressed = true
@@ -411,7 +422,7 @@ function ui:draw()
             end
             self.keypad.button_status[k] = imgui.Button(string.format("%X", self.keypad.keys_dream.layout[k]), but_w, but_h)
             if self.keypad.button_status[k] then
-                self.keypad:keypressed(self.keypad.keys_qwerty[k])
+                self.keypad:keypressed(nil, self.keypad.keys_qwerty[k])
             end
             if button_pressed then
                 imgui.PopStyleColor(1)
@@ -425,7 +436,7 @@ function ui:draw()
         end
         imgui.Dummy(0, 2)
         if imgui.Button("FN", (but_w * 2) + 4, but_h) then
-            self.keypad:keypressed("lshift")
+            self.keypad:keypressed(nil, "lshift")
         end
         if imgui.IsItemHovered() then
             imgui.SetTooltip("shift")

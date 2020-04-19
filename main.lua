@@ -90,10 +90,10 @@ function love.quit()
     imgui.ShutDown()
 end
 
-function love.keypressed(key)
+function love.keypressed(key, scancode)
     imgui.KeyPressed(key)
     if not imgui.GetWantCaptureKeyboard() then
-        keypad:keypressed(key)
+        keypad:keypressed(key, scancode)
         if key == "space" then
             CPU.pause = not CPU.pause
         elseif key == "escape" then
@@ -115,10 +115,10 @@ function love.keypressed(key)
     end
 end
 
-function love.keyreleased(key)
+function love.keyreleased(key, scancode)
     imgui.KeyReleased(key)
     if not imgui.GetWantCaptureKeyboard() then
-        keypad:keyreleased(key)
+        keypad:keyreleased(key, scancode)
     end
 end
 

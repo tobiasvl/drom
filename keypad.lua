@@ -35,6 +35,21 @@ keypad.keys_original = {
     }
 }
 
+keypad.keys_cosmac = {
+    layout = {
+    [0]=0x1, 0x2, 0x3, 0xC,
+        0x4, 0x5, 0x6, 0xD,
+        0x7, 0x8, 0x9, 0xE,
+        0xA, 0x0, 0xB, 0xF
+    },
+    lines = {
+    [0]=0xED, 0xEB, 0xE7, 0x7E,
+        0xDE, 0xDD, 0xDB, 0x7D,
+        0xD7, 0xBE, 0xBD, 0x7B,
+        0xBB, 0xEE, 0xB7, 0x77
+    }
+}
+
 keypad.keys_qwerty = {
 [0]="1", "2", "3", "4",
     "q", "w", "e", "r",
@@ -57,24 +72,24 @@ function keypad:connect(pia_port)
     self.pia.p = 0x0F
 end
 
-function keypad:keypressed(key)
-    local hexkey = self.key_mapping[key]
+function keypad:keypressed(key, scancode)
+    local hexkey = self.key_mapping[scancode]
     if hexkey then
         self.key_status[hexkey] = true
         self.pia.c1 = true
         self.pia.p = self.keys_dream.lines[hexkey]
-    elseif key == "lshift" or key == "rshift" then
+    elseif scancode == "lshift" or scancode == "rshift" then
         self.pia.c2 = true
     end
 end
 
-function keypad:keyreleased(key)
-    local hexkey = self.key_mapping[key]
+function keypad:keyreleased(key, scancode)
+    local hexkey = self.key_mapping[scancode]
     if hexkey then
         self.key_status[hexkey] = false
         self.pia.c1 = false
         self.pia.p = 0x0F
-    elseif key == "lshift" or key == "rshift" then
+    elseif scancode == "lshift" or scancode == "rshift" then
         self.pia.c2 = false
     end
 end
