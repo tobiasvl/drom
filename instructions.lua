@@ -319,11 +319,16 @@ end
 
 -- CBA
 function instructions:cba()
-    local result = self.cpu.registers.a() - self.cpu.registers.b()
+    local a = self.cpu.registers.a()
+    local b = self.cpu.registers.b()
+    local result = a - b
     self.cpu.registers.status.n = bit.band(result, 0x80) ~= 0
     self.cpu.registers.status.z = bit.band(result, 0xFF) == 0
-    --self.cpu.registers.status.v -- TODO
-    --self.cpu.registers.status.c -- TODO
+    self.cpu.registers.status.v = (bit.band(a, 0x80) ~= 0 and bit.band(b, 0x80) == 0 and bit.band(result, 0x80) == 0) or
+                                  (bit.band(a, 0x80) == 0 and bit.band(b, 0x80) ~= 0 and bit.band(result, 0x80) ~= 0)
+    self.cpu.registers.status.c = (bit.band(a, 0x80) == 0 and bit.band(b, 0x80) ~= 0) or
+                                  (bit.band(b, 0x80) ~= 0 and bit.band(result, 0x80) ~= 0) or
+                                  (bit.band(result, 0x80) ~= 0 and bit.band(a, 0x80) == 0)
 end
 
 -- CLC
@@ -352,11 +357,16 @@ end
 
 -- CMP
 function instructions:cmp(addr_mode, acc)
-    local result = self.cpu.registers[acc]() - addr_mode()
+    local x = self.cpu.registers[acc]()
+    local m = addr_mode()
+    local result = x - m
     self.cpu.registers.status.n = bit.band(result, 0x80) ~= 0
     self.cpu.registers.status.z = bit.band(result, 0xFF) == 0
-    --self.cpu.registers.status.v -- TODO
-    self.cpu.registers.status.c = result > 0xFF -- TODO incorrect
+    self.cpu.registers.status.v = (bit.band(x, 0x80) ~= 0 and bit.band(m, 0x80) == 0 and bit.band(result, 0x80) == 0) or
+                                  (bit.band(x, 0x80) == 0 and bit.band(m, 0x80) ~= 0 and bit.band(result, 0x80) ~= 0)
+    self.cpu.registers.status.c = (bit.band(x, 0x80) == 0 and bit.band(m, 0x80) ~= 0) or
+                                  (bit.band(m, 0x80) ~= 0 and bit.band(result, 0x80) ~= 0) or
+                                  (bit.band(result, 0x80) ~= 0 and bit.band(x, 0x80) == 0)
 end
 
 -- COM
@@ -371,9 +381,13 @@ end
 
 -- CPX
 function instructions:cpx(addr_mode)
+    local x = self.cpu.registers.ix()
+    local m = addr_mode()
     local result = self.cpu.registers.ix() - addr_mode()
-    -- TODO should set N and V, although they're not intended for use in branching
+    self.cpu.registers.status.n = bit.band(result, 0x8000) ~= 0
     self.cpu.registers.status.z = bit.band(result, 0xFFFF) == 0
+    self.cpu.registers.status.v = (bit.band(x, 0x8000) ~= 0 and bit.band(m, 0x8000) == 0 and bit.band(result, 0x8000) == 0) or
+                                  (bit.band(x, 0x8000) == 0 and bit.band(m, 0x8000) ~= 0 and bit.band(result, 0x8000) ~= 0)
 end
 
 -- DAA
@@ -544,26 +558,37 @@ end
 
 -- RTS
 function instructions:rts()
-    -- TODO check this logic
     self.cpu.registers.pc(bit.bor(bit.lshift(self.cpu.memory[self.cpu.registers.sp() + 1], 8), self.cpu.memory[self.cpu.registers.sp() + 2]))
     self.cpu.registers.sp(self.cpu.registers.sp() + 2)
 end
 
 -- SBA
 function instructions:sba()
-    local result = self.cpu.registers.a() - self.cpu.registers.b()
+    local a = self.cpu.registers.a()
+    local b = self.cpu.registers.b()
+    local result = a - b
     self.cpu.registers.status.n = bit.band(result, 0x80) ~= 0
     self.cpu.registers.status.z = bit.band(result, 0xFF) == 0
-    -- TODO flags
+    self.cpu.registers.status.v = (bit.band(a, 0x80) ~= 0 and bit.band(b, 0x80) == 0 and bit.band(result, 0x80) == 0) or
+                                  (bit.band(a, 0x80) == 0 and bit.band(b, 0x80) ~= 0 and bit.band(result, 0x80) ~= 0)
+    self.cpu.registers.status.c = (bit.band(a, 0x80) == 0 and bit.band(b, 0x80) ~= 0) or
+                                  (bit.band(b, 0x80) ~= 0 and bit.band(result, 0x80) ~= 0) or
+                                  (bit.band(result, 0x80) ~= 0 and bit.band(a, 0x80) == 0)
     self.cpu.registers.a(result)
 end
 
 -- SBC
 function instructions:sbc(addr_mode, acc)
-    local result = self.cpu.registers[acc]() - addr_mode() - (self.cpu.registers.status.c and 1 or 0)
+    local x = self.cpu.registers[acc]()
+    local m = addr_mode()
+    local result = x - m - (self.cpu.registers.status.c and 1 or 0)
     self.cpu.registers.status.n = bit.band(result, 0x80) ~= 0
     self.cpu.registers.status.z = bit.band(result, 0xFF) == 0
-    -- TODO flags
+    self.cpu.registers.status.v = (bit.band(x, 0x80) ~= 0 and bit.band(m, 0x80) == 0 and bit.band(result, 0x80) == 0) or
+                                  (bit.band(x, 0x80) == 0 and bit.band(m, 0x80) ~= 0 and bit.band(result, 0x80) ~= 0)
+    self.cpu.registers.status.c = (bit.band(x, 0x80) == 0 and bit.band(m, 0x80) ~= 0) or
+                                  (bit.band(m, 0x80) ~= 0 and bit.band(result, 0x80) ~= 0) or
+                                  (bit.band(result, 0x80) ~= 0 and bit.band(x, 0x80) == 0)
     self.cpu.registers[acc](result)
 end
 
@@ -611,11 +636,16 @@ end
 
 -- SUB
 function instructions:sub(addr_mode, acc)
-    local result = self.cpu.registers[acc]() - addr_mode()
+    local x = self.cpu.registers[acc]()
+    local m = addr_mode()
+    local result = x - m
     self.cpu.registers.status.n = bit.band(result, 0x80) ~= 0
     self.cpu.registers.status.z = bit.band(result, 0xFF) == 0
-    --self.cpu.registers.status.v -- TODO
-    --self.cpu.registers.status.c -- TODO
+    self.cpu.registers.status.v = (bit.band(x, 0x80) ~= 0 and bit.band(m, 0x80) == 0 and bit.band(result, 0x80) == 0) or
+                                  (bit.band(x, 0x80) == 0 and bit.band(m, 0x80) ~= 0 and bit.band(result, 0x80) ~= 0)
+    self.cpu.registers.status.c = (bit.band(x, 0x80) == 0 and bit.band(m, 0x80) ~= 0) or
+                                  (bit.band(m, 0x80) ~= 0 and bit.band(result, 0x80) ~= 0) or
+                                  (bit.band(result, 0x80) ~= 0 and bit.band(x, 0x80) == 0)
     self.cpu.registers[acc](result)
 end
 
