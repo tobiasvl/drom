@@ -23,8 +23,6 @@ function love.load(arg)
     CPU:init()
     keypad:connect(CPU.memory.pia.a)
 
-    CPU.pause = true
-
     romfile = arg[1] or "Dream6800Rom.bin"
     local file = love.filesystem.newFile(romfile)
     local ok, err = file:open("r")
