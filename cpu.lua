@@ -28,13 +28,13 @@ local status = setmetatable({
 }, {
     __call = function(self, newValue)
         if newValue then
-            for i, cc in ipairs({"c", "v", "z", "n", "i", "h"}) do
+            for _, cc in ipairs({"c", "v", "z", "n", "i", "h"}) do
                 self[cc] = bit.band(newValue, 1) == 1
                 newValue = bit.rshift(newValue, 1)
             end
         else
             local statuses = 0
-            for i, cc in ipairs({"c", "v", "z", "n", "i", "h"}) do
+            for _, cc in ipairs({"h", "i", "n", "z", "v", "c"}) do
                 statuses = bit.bor(bit.lshift(statuses, 1), self[cc] and 1 or 0)
             end
             return bit.bor(statuses, 0xC0)
