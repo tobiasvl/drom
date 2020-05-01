@@ -866,8 +866,7 @@ return {
     [0x8C] = {
         instruction = "cpx",
         cycles = 3,
-        addr_mode = "imm16",
-        acc = "a"
+        addr_mode = "imm16"
     },
     [0x8D] = {
         instruction = "bsr",
@@ -955,8 +954,7 @@ return {
     [0x9C] = {
         instruction = "cpx",
         cycles = 4,
-        addr_mode = "dir16",
-        acc = "a"
+        addr_mode = "dir16"
     },
     [0x9D] = {
         instruction = "hcf",
@@ -1042,8 +1040,7 @@ return {
     [0xAC] = {
         instruction = "cpx",
         cycles = 6,
-        addr_mode = "idx16",
-        acc = "a"
+        addr_mode = "idx16"
     },
     [0xAD] = {
         instruction = "jsr",
@@ -1130,13 +1127,12 @@ return {
     [0xBC] = {
         instruction = "cpx",
         cycles = 5,
-        addr_mode = "ext16",--"ext",
-        acc = "a"
+        addr_mode = "ext16"--"ext"
     },
     [0xBD] = {
         instruction = "jsr",
         cycles = 9,
-        addr_mode = "imm16",--"ext",
+        addr_mode = "imm16"--"ext",
     },
     [0xBE] = {
         instruction = "lds",
@@ -1314,7 +1310,7 @@ return {
     [0xDF] = {
         instruction = "stx",
         cycles = 5,
-        addr_mode = "dir16",
+        addr_mode = "dir16"
     },
     [0xE0] = {
         instruction = "sub",
