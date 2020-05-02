@@ -54,7 +54,6 @@ local CPU = {
     },
     nmi = false, -- non-maskable interrupt control input
     irq = false, -- interrupt request
-    memory = require "memory",
     key_status = {},
     screen = {}, -- TODO implement as module?
     display = true, -- TODO remove this?
@@ -63,7 +62,8 @@ local CPU = {
     breakpoint = 0
 }
 
-function CPU:init()
+function CPU:init(memory)
+    self.memory = memory
     instructions:init(self)
 
     --for i = self.memory.ram.startAddress, self.memory.ram.size - 1 do
@@ -72,19 +72,6 @@ function CPU:init()
 
     self.reset = true
     self.instructions = 0
-end
-
-function CPU:read_rom(file)
-    local address = 0
-    while (not file:isEOF()) do 
-        local byte, len = file:read(1)
-        -- Dropped files don't seem to report EOF
-        if len ~= 1 or not string.byte(byte) then
-            break
-        end
-        self.memory.eprom[address] = string.byte(byte)
-        address = address + 1
-    end
 end
 
 function CPU:saveToStack()

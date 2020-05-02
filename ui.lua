@@ -331,6 +331,9 @@ function ui:draw()
             -- Cull output so we don't bog down the UI
             if i > line - 1 and i < line + (win_h / font_height) then
                 local c = self.CPU.memory[i]
+                if i < 0x0FFF and not self.CPU.memory.initialized[i] then
+                    imgui.PushStyleColor("ImGui_Text", 0.65, 0.65, 0.65, 1)
+                end
                 imgui.Text(string.format("%04X: %02X %03d", i, c, c))
                 imgui.SameLine()
                 -- Print only printable ASCII characters
@@ -341,6 +344,9 @@ function ui:draw()
                     byte[j] = bit.band(bit.rshift(c, 7 - j + 1), 1)
                 end
                 imgui.Text(table.concat(byte))
+                if i < 0x0FFF and not self.CPU.memory.initialized[i] then
+                    imgui.PopStyleColor()
+                end
             else
                 imgui.Text("")
             end

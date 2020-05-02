@@ -1,4 +1,5 @@
 local CPU = require 'cpu'
+local memory = require 'memory'
 local UI = require 'ui'
 local keypad = require 'keypad'
 
@@ -10,25 +11,20 @@ local debug = t.console
 num_instructions = 0
 cycles = 0
 
-local shaders = {}
-
-local romfile
-
-
 function love.load(arg)
     --min_dt = 1/60--60 --fps
     --next_time = love.timer.getTime()
     --debug.debug()
 
-    CPU:init()
-    keypad:connect(CPU.memory.pia.a)
+    CPU:init(memory)
 
-    romfile = arg[1] or "Dream6800Rom.bin"
-    local file = love.filesystem.newFile(romfile)
+    keypad:connect(memory.pia.a)
+
+    local file = love.filesystem.newFile("Dream6800Rom.bin")
     local ok, err = file:open("r")
     if ok then
         CPU.rom_loaded = true
-        CPU:read_rom(file, 0xC000)
+        memory.eprom = memory.eprom(0xC000, file)
     else
         print(err)
         CPU.rom_loaded = false
