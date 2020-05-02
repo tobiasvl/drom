@@ -1,6 +1,5 @@
-return function(startAddress, length, initial_value)
+return function(length, initial_value)
     local self = {
-        startAddress = startAddress,
         size = length,
         memory = {},
         initialized = setmetatable({}, {

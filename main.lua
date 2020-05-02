@@ -1,5 +1,8 @@
 local CPU = require 'cpu'
 local memory = require 'memory'
+local ram = require 'ram'
+local eprom = require 'eprom'
+local pia = require 'pia'
 local UI = require 'ui'
 local keypad = require 'keypad'
 
@@ -18,16 +21,18 @@ function love.load(arg)
 
     CPU:init(memory)
 
-    keypad:connect(memory.pia.a)
+    memory:connect(0x0000, ram(0x0FFF))
+    memory:connect(0x8010, pia.a)
+    memory:connect(0x8012, pia.b)
+
+    keypad:connect(pia.a)
 
     local file = love.filesystem.newFile("Dream6800Rom.bin")
     local ok, err = file:open("r")
     if ok then
-        CPU.rom_loaded = true
-        memory.eprom = memory.eprom(0xC000, file)
+        memory:connect(0xC000, eprom(file))
     else
         print(err)
-        CPU.rom_loaded = false
     end
     file:close()
 

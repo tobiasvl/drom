@@ -1,7 +1,5 @@
-return function(startAddress, file)
-    local self = {
-        startAddress = startAddress
-    }
+return function(file)
+    local self = {}
     local address = 0
     while (not file:isEOF()) do 
         local byte, len = file:read(1)

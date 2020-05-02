@@ -24,9 +24,11 @@ local function pia_port(peripheral)
 
     return setmetatable({}, {
         __index = function(_, poop)
-            if poop == "irq" then
+            if poop == "size" then
+                return 2
+            elseif poop == "irq" then
                 return self.control.irq1 -- TODO choose IRQ
-            elseif poop == "data" then
+            elseif poop == 0 or poop == "data" then
                 if self.control.ddr_access then
                     return self.ddr
                 else
@@ -35,7 +37,7 @@ local function pia_port(peripheral)
                     --return bit.band(self.peripheral_pins, bit.band(bit.bnot(self.ddr), 0xFF)) -- TODO A?
                     return self.peripheral_pins -- TODO this is how B works?
                 end
-            elseif poop == "control" then
+            elseif poop == 1 or poop == "control" then
                 local control = self.control.irq1 and 1 or 0
                 control = bit.lshift(control, 1)
                 control = bit.bor(control, self.control.irq2 and 1 or 0)
@@ -56,7 +58,7 @@ local function pia_port(peripheral)
                 if newValue then self.control.irq1 = true end
             elseif poop == "c2" then
                 if newValue then self.control.irq2 = true end
-            elseif poop == "control" then
+            elseif poop == 1 or poop == "control" then
                 self.control.c1.enable = bit.band(newValue, 0x01) ~= 0
                 self.control.c1.invert = bit.band(newValue, 0x02) ~= 0
                 self.control.ddr_access = bit.band(newValue, 0x04) == 0
@@ -68,7 +70,7 @@ local function pia_port(peripheral)
                 self.peripheral_pins = bit.bor(self.peripheral_pins, bit.band(self.output_register, self.ddr))
             elseif poop == "rs" then
                 self:reset()
-            elseif poop == "data" then
+            elseif poop == 0 or poop == "data" then
                 if self.control.ddr_access then
                     self.ddr = bit.band(newValue, 0xFF)
                     self.peripheral_pins = bit.band(self.input, bit.band(bit.bnot(self.ddr), 0xFF))
