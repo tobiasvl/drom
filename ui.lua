@@ -259,12 +259,18 @@ function ui:draw()
             self.CPU.breakpoint = tonumber(text, 16)
         end
 
-        imgui.BeginChild("##instructions")
-        local _, win_h = imgui.GetWindowSize()
+        local padding = 2 -- Vertical space taken up by breakpoint and jump
         local font_height = imgui.GetFontSize() + 4
+        imgui.BeginChild("##instructions", 0, -(font_height * padding))
+        local win_w, win_h = imgui.GetWindowSize()
         local line = math.floor(imgui.GetScrollY() / font_height)
         local j = 0
         for i = 0, 0xFFFF do -- TODO only to the largest mapped memory?
+            if self.instructionsScrollNow and self.instructionsScroll == i - math.floor(win_h / font_height / 2) - 1 then
+                imgui.SetScrollHere()
+                line = self.instructionsScroll
+                self.instructionsScrollNow = false
+            end
             if disassembler.memory[i] then
                 if i == self.CPU.registers.pc() then
                     imgui.Text(">")
@@ -285,6 +291,16 @@ function ui:draw()
             end
         end
         imgui.EndChild()
+        -- Scroll
+        imgui.Text("Scroll to: ")
+        imgui.SameLine()
+        imgui.PushItemWidth(4 * 9) -- TODO get char width
+        local scroll, scroll_input = imgui.InputText("##instructionscroll", string.format("%04X", self.instructionsScroll or 0), 5, hex_input_flags)
+        imgui.PopItemWidth()
+        if scroll_input then
+            self.instructionsScroll = tonumber(scroll, 16)
+            self.instructionsScrollNow = true
+        end
         imgui.End()
     end
 
