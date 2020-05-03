@@ -133,12 +133,12 @@ function CPU:cycle()
             if self.nmi then
                 self.nmi = false
                 self.registers.status.i = true -- TODO ?
-                local n = 0xC3FF
+                local n = 0xFFFF
                 self.registers.pc(bit.band(bit.lshift(self.memory[n - 3], 8), self.memory[n - 2]))
             elseif self.irq and not self.registers.status.i then
                 self.irq = false
                 self.registers.status.i = true
-                local n = 0xC3FF
+                local n = 0xFFFF
                 self.registers.pc(bit.band(bit.lshift(self.memory[n - 7], 8), self.memory[n - 6]))
             end
         end
@@ -146,18 +146,18 @@ function CPU:cycle()
     else
         if self.reset then
             self.reset = false
-            local n = 0xC3FF
+            local n = 0xFFFF
             self.registers.pc(bit.bor(bit.lshift(self.memory[n - 1], 8), self.memory[n]))
         elseif self.nmi then
             self.nmi = false
             self:saveToStack()
-            local n = 0xC3FF
+            local n = 0xFFFF
             self.registers.pc(bit.bor(bit.lshift(self.memory[n - 3], 8), self.memory[n - 2]))
         elseif self.irq and not self.registers.status.i then
             self.irq = false
             self:saveToStack()
             self.registers.status.i = true
-            local n = 0xC3FF
+            local n = 0xFFFF
             self.registers.pc(bit.bor(bit.lshift(self.memory[n - 7], 8), self.memory[n - 6]))
         end
 

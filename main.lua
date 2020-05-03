@@ -1,8 +1,5 @@
 local CPU = require 'cpu'
 local memory = require 'memory'
-local ram = require 'ram'
-local eprom = require 'eprom'
-local pia = require 'pia'
 local UI = require 'ui'
 local keypad = require 'keypad'
 
@@ -15,6 +12,9 @@ num_instructions = 0
 cycles = 0
 
 function love.load(arg)
+    local ram = require 'ram'
+    local eprom = require 'eprom'
+    local pia = require 'pia'
     --min_dt = 1/60--60 --fps
     --next_time = love.timer.getTime()
     --debug.debug()
@@ -27,14 +27,29 @@ function love.load(arg)
 
     keypad:connect(pia.a)
 
+    local rom = {}
     local file = love.filesystem.newFile("Dream6800Rom.bin")
     local ok, err = file:open("r")
     if ok then
-        memory:connect(0xC000, eprom(file))
+        local address = 0
+        while (not file:isEOF()) do 
+            local byte, len = file:read(1)
+            -- Dropped files don't seem to report EOF
+            if len ~= 1 or not string.byte(byte) then
+                break
+            end
+            rom[address] = string.byte(byte)
+            address = address + 1
+        end
+        rom.size = address
+        file:close()
     else
         print(err)
     end
-    file:close()
+
+    for address = 0xC000, 0xFFFF - rom.size + 1, rom.size do
+        memory:connect(address, eprom(rom))
+    end
 
     UI:init(CPU, keypad)
 end
