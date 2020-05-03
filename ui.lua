@@ -293,6 +293,9 @@ function ui:draw()
         self.showMemoryWindow = imgui.Begin("Memory", true, "MenuBar")
         if imgui.BeginMenuBar() then
             if imgui.BeginMenu("Settings") then
+                if imgui.MenuItem("Random uninitialized memory", nil, self.ram.uninitialized_random, true) then
+                    self.ram:set_uninitialized_value(self.ram.uninitialized_random and 0 or nil)
+                end
                 imgui.EndMenu()
             end
             imgui.EndMenuBar()
@@ -329,9 +332,9 @@ function ui:draw()
                 self.memoryScrollNow = false
             end
             -- Cull output so we don't bog down the UI
-            if i > line - 1 and i < line + (win_h / font_height) then
+            if i > line - 1 and i < line + (win_h / font_height) + 1 then
                 local c = self.CPU.memory[i]
-                if i < 0x0FFF and not self.CPU.memory.initialized[i] then
+                if i < self.ram.size and not self.ram.initialized[i] then
                     imgui.PushStyleColor("ImGui_Text", 0.65, 0.65, 0.65, 1)
                 end
                 imgui.Text(string.format("%04X: %02X %03d", i, c, c))
@@ -344,7 +347,7 @@ function ui:draw()
                     byte[j] = bit.band(bit.rshift(c, 7 - j + 1), 1)
                 end
                 imgui.Text(table.concat(byte))
-                if i < 0x0FFF and not self.CPU.memory.initialized[i] then
+                if i < self.ram.size and not self.ram.initialized[i] then
                     imgui.PopStyleColor()
                 end
             else

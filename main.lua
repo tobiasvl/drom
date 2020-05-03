@@ -12,7 +12,7 @@ num_instructions = 0
 cycles = 0
 
 function love.load(arg)
-    local ram = require 'ram'
+    local ram = require 'ram'(0x0FFF)
     local eprom = require 'eprom'
     local pia = require 'pia'
     --min_dt = 1/60--60 --fps
@@ -21,7 +21,7 @@ function love.load(arg)
 
     CPU:init(memory)
 
-    memory:connect(0x0000, ram(0x0FFF))
+    memory:connect(0x0000, ram)
     memory:connect(0x8010, pia.a)
     memory:connect(0x8012, pia.b)
 
@@ -52,6 +52,7 @@ function love.load(arg)
     end
 
     UI:init(CPU, keypad)
+    UI.ram = ram
 end
 
 function love.filedropped(file)
