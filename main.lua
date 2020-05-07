@@ -77,7 +77,6 @@ function love.update(dt)
         end
         if cycles >= 1000000 / 50 then
             cycles = cycles - (1000000 / 50)
-            --CPU.memory[0x8013] = bit.bor(CPU.memory[0x8013], 0x80)
             --PIA should check its own interrupt flag and send IRQ til MPU...
             CPU.irq = true
         end
@@ -101,13 +100,9 @@ function love.draw()
     end
 end
 
-function love.quit()
-    imgui.ShutDown()
-end
-
 function love.keypressed(key, scancode)
-    imgui.KeyPressed(key)
-    if not imgui.GetWantCaptureKeyboard() then
+    UI.KeyPressed(key)
+    if not UI.GetWantCaptureKeyboard() then
         keypad:keypressed(key, scancode)
         if key == "space" then
             CPU.pause = not CPU.pause
@@ -123,7 +118,6 @@ function love.keypressed(key, scancode)
             num_instructions = num_instructions + 1
             if cycles >= 1000000 / 50 then
                 cycles = cycles - (1000000 / 50)
-                --CPU.memory[0x8013] = bit.bor(CPU.memory[0x8013], 0x80)
                 CPU.irq = true
             end
         end
@@ -131,43 +125,8 @@ function love.keypressed(key, scancode)
 end
 
 function love.keyreleased(key, scancode)
-    imgui.KeyReleased(key)
-    if not imgui.GetWantCaptureKeyboard() then
+    UI.KeyReleased(key)
+    if not UI.GetWantCaptureKeyboard() then
         keypad:keyreleased(key, scancode)
-    end
-end
-
-function love.mousemoved(x, y)
-    imgui.MouseMoved(x, y, true)
-    if not imgui.GetWantCaptureMouse() then
-        -- Pass event to the game
-    end
-end
-
-function love.mousepressed(x, y, button)
-    imgui.MousePressed(button)
-    if not imgui.GetWantCaptureMouse() then
-        -- Pass event to the game
-    end
-end
-
-function love.mousereleased(x, y, button)
-    imgui.MouseReleased(button)
-    if not imgui.GetWantCaptureMouse() then
-        -- Pass event to the game
-    end
-end
-
-function love.wheelmoved(x, y)
-    imgui.WheelMoved(y)
-    if not imgui.GetWantCaptureMouse() then
-        -- Pass event to the game
-    end
-end
-
-function love.textinput(t)
-    imgui.TextInput(t)
-    if not imgui.GetWantCaptureKeyboard() then
-        -- Pass event to the game
     end
 end

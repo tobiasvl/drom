@@ -12,6 +12,29 @@ local hex_input_flags = {
     "ImGuiInputTextFlags_EnterReturnsTrue"
 }
 
+function love.mousemoved(x, y)
+    imgui.MouseMoved(x, y, true)
+end
+
+function love.mousepressed(_, _, button)
+    imgui.MousePressed(button)
+end
+
+function love.mousereleased(_, _, button)
+    imgui.MouseReleased(button)
+end
+
+function love.wheelmoved(_, y)
+    imgui.WheelMoved(y)
+end
+
+love.textinput = imgui.TextInput
+love.quit = imgui.ShutDown
+
+ui.KeyPressed = imgui.KeyPressed
+ui.KeyReleased = imgui.KeyReleased
+ui.GetWantCaptureKeyboard = imgui.GetWantCaptureKeyboard
+
 function ui:init(CPU, keypad)
     self.CPU = CPU
     self.keypad = keypad
@@ -562,10 +585,6 @@ function ui:draw()
     end
 
     imgui.Render()
-end
-
-function ui.quit()
-    imgui.ShutDown()
 end
 
 return ui
