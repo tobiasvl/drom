@@ -507,13 +507,64 @@ function ui:draw()
             end
             imgui.EndMenu()
         end
+        if imgui.BeginMenu("Help") then
+            if imgui.MenuItem("CHIPOS manual...") then
+            end
+            if imgui.MenuItem("About...") then
+                self.showAboutPopup = true
+                imgui.OpenPopup("About")
+            end
+            imgui.EndMenu()
+        end
         imgui.EndMainMenuBar()
+    end
+
+    if self.showAboutPopup then
+        imgui.OpenPopup("About DRÖM")
+    end
+
+    self.showAboutPopup = imgui.BeginPopupModal("About DRÖM", self.showAboutPopup)
+    if self.showAboutPopup then
+        local drom_url = "https://github.com/tobiasvl/drom"
+        local dream_url = "http://www.mjbauer.biz/DREAM6800.htm"
+        local chip8_url = "https://johnearnest.github.io/chip8Archive/?sort=platform"
+        imgui.Text("DRÖM is an emulator for DREAM 6800, a hobby")
+        imgui.Text("computer created by Michael J. Bauer in 1979.")
+        imgui.Dummy(1, 1)
+        imgui.Text("DRÖM © 2020 Tobias V. Langhoff")
+        imgui.Text("Source code available under MIT license at")
+        if imgui.Button(drom_url) then
+            love.system.openURL(drom_url)
+        end
+        imgui.Dummy(1, 1)
+        imgui.Text("CHIPOS © 1978 Michael J. Bauer")
+        imgui.Text("Dream Invaders © 1980 Michael J. Bauer")
+        imgui.Text("Source code and binaries available at")
+        if imgui.Button(dream_url) then
+            love.system.openURL(dream_url)
+        end
+        imgui.Text("(used in DRÖM with permission)")
+        imgui.Dummy(1, 1)
+        imgui.Text("All CHIP-8 games included in DRÖM are")
+        imgui.Text("in the public domain and are available")
+        imgui.Text("in the")
+        imgui.SameLine()
+        if imgui.Button("CHIP-8 Archive") then
+            love.system.openURL(chip8_url)
+        end
+        imgui.SameLine()
+        imgui.Text(".")
+        if imgui.Button("Close") then
+            imgui.CloseCurrentPopup()
+            self.showAboutPopup = false
+        end
+        imgui.EndPopup()
     end
 
     imgui.Render()
 end
 
-function ui:quit()
+function ui.quit()
     imgui.ShutDown()
 end
 
