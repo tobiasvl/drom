@@ -1,4 +1,5 @@
 local imgui = require "imgui"
+local util = require 'util'
 local moonshine = require 'moonshine'
 local disassembler = require "disassembler"
 
@@ -501,6 +502,26 @@ function ui:draw()
 
     if imgui.BeginMainMenuBar() then
         if imgui.BeginMenu("File") then
+            if imgui.MenuItem("Quickload CHIP-8...") then
+                local chip8 = util.read_file("TETRIS")
+                for address = 0, #chip8 do
+                    self.CPU.memory[address + 0x0200] = chip8[address]
+                end
+                self.CPU.registers.pc(0xC000)
+            end
+            if imgui.IsItemHovered() then
+                imgui.SetTooltip("Load binary file at $0200 and jump to $C000")
+            end
+            if imgui.MenuItem("Quickload Dream Invaders") then
+                local dream_invaders = util.read_file("invaders_code.bin")
+                for address = 0, #dream_invaders do
+                    self.CPU.memory[address + 0x0200] = dream_invaders[address]
+                end
+                self.CPU.registers.pc(0x0200)
+            end
+            if imgui.IsItemHovered() then
+                imgui.SetTooltip("Load Dream Invaders at $0200 and jump to $0200")
+            end
             if imgui.MenuItem("Quit") then
                 love.event.quit()
             end
