@@ -215,21 +215,35 @@ function ui:draw()
         self.showCPUWindow = imgui.Begin("CPU", true)
         imgui.Text(string.format("Cycles: %d", cycles))
         for _, reg in ipairs({"a", "b"}) do
-            if self.CPU.registers[reg]() ~= self.CPU.registers[reg].prev_value and num_instructions == self.CPU.registers[reg].prev_inst + 1 then
+            local register = self.CPU.registers[reg]
+            local reg_changed = register() ~= register.prev_value and num_instructions == register.prev_inst + 1
+            if reg_changed then
                 imgui.PushStyleColor("ImGui_Text", 1, 0, 0, 1)
             end
-            imgui.Text(string.format(" %s:       %02X", reg, self.CPU.registers[reg]()))
-            if self.CPU.registers[reg]() ~= self.CPU.registers[reg].prev_value and num_instructions == self.CPU.registers[reg].prev_inst + 1 then
+            imgui.Text(string.format(" %s:      ", reg))
+            imgui.SameLine()
+            local text, textinput = imgui.InputText("##reg-" .. reg, string.format("%02X", register()), 3, hex_input_flags)
+            if reg_changed then
                 imgui.PopStyleColor()
+            end
+            if textinput then
+                register(tonumber(text, 16))
             end
         end
         for _, reg in ipairs({"pc", "sp", "ix"}) do
-            if self.CPU.registers[reg]() ~= self.CPU.registers[reg].prev_value and num_instructions == self.CPU.registers[reg].prev_inst + 1 then
+            local register = self.CPU.registers[reg]
+            local reg_changed = register() ~= register.prev_value and num_instructions == register.prev_inst + 1
+            if reg_changed then
                 imgui.PushStyleColor("ImGui_Text", 1, 0, 0, 1)
             end
-            imgui.Text(string.format("%s:     %04X", reg, self.CPU.registers[reg]()))
-            if self.CPU.registers[reg]() ~= self.CPU.registers[reg].prev_value and num_instructions == self.CPU.registers[reg].prev_inst + 1 then
+            imgui.Text(string.format("%s:    ", reg))
+            imgui.SameLine()
+            local text, textinput = imgui.InputText("##reg-" .. reg, string.format("%04X", register()), 5, hex_input_flags)
+            if reg_changed then
                 imgui.PopStyleColor()
+            end
+            if textinput then
+                register(tonumber(text, 16))
             end
         end
         local s = ""
