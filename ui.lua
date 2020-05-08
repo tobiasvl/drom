@@ -136,29 +136,6 @@ function ui:draw()
 
     imgui.NewFrame()
 
-    if self.showSpeakerWindow then
-        imgui.SetNextWindowPos(0, 20, "ImGuiCond_FirstUseEver")
-        self.showSpeakerWindow = imgui.Begin("Speaker", true, { })--, { "ImGuiWindowFlags_AlwaysAutoResize" })
-
-        local toggle = false
-        if self.speaker.mute then
-            if sound_playing then
-                toggle = imgui.ImageButton(self.canvases.speaker_mute_active, 60, 60)
-            else
-                toggle = imgui.ImageButton(self.canvases.speaker_mute, 60, 60)
-            end
-        else
-            if sound_playing then
-                toggle = imgui.ImageButton(self.canvases.speaker_active, 60, 60)
-            else
-                toggle = imgui.ImageButton(self.canvases.speaker, 60, 60)
-            end
-        end
-        if toggle then self.speaker.mute = not self.speaker.mute end
-
-        imgui.End()
-    end
-
     if self.showDisplayWindow then
         imgui.SetNextWindowPos(0, 20, "ImGuiCond_FirstUseEver")
         self.showDisplayWindow = imgui.Begin("Display", nil, { "NoCollapse", "MenuBar" })--, { "ImGuiWindowFlags_AlwaysAutoResize" })
@@ -184,7 +161,7 @@ function ui:draw()
             end
             imgui.EndMenuBar()
         end
---        local win_x, win_y = imgui.GetWindowSize()
+        --local win_x, win_y = imgui.GetWindowSize()
         if self.CPU.display and self.CPU.drawflag then
             lg.setCanvas(self.canvases.display)
             lg.clear()
@@ -207,6 +184,29 @@ function ui:draw()
             self.CPU.drawflag = false
         end
         imgui.Image(self.canvases.display, 64*8 + 8, 32*8)
+        imgui.End()
+    end
+
+    if self.showSpeakerWindow then
+        imgui.SetNextWindowPos(0, 20, "ImGuiCond_FirstUseEver")
+        self.showSpeakerWindow = imgui.Begin("Speaker", true, { })--, { "ImGuiWindowFlags_AlwaysAutoResize" })
+
+        local toggle = false
+        if self.speaker.mute then
+            if sound_playing then
+                toggle = imgui.ImageButton(self.canvases.speaker_mute_active, 60, 60)
+            else
+                toggle = imgui.ImageButton(self.canvases.speaker_mute, 60, 60)
+            end
+        else
+            if sound_playing then
+                toggle = imgui.ImageButton(self.canvases.speaker_active, 60, 60)
+            else
+                toggle = imgui.ImageButton(self.canvases.speaker, 60, 60)
+            end
+        end
+        if toggle then self.speaker.mute = not self.speaker.mute end
+
         imgui.End()
     end
 
@@ -375,7 +375,7 @@ function ui:draw()
             if i > line - 1 and i < line + (win_h / font_height) + 1 then
                 local c = self.CPU.memory[i]
                 if i < self.ram.size and not self.ram.initialized[i] then
-                    imgui.PushStyleColor("ImGui_Text", 0.65, 0.65, 0.65, 1)
+                    imgui.PushStyleColor("ImGui_Text", 0.50, 0.50, 0.50, 1)
                 end
                 imgui.Text(string.format("%04X: %02X %03d", i, c, c))
                 imgui.SameLine()
@@ -457,7 +457,7 @@ function ui:draw()
             imgui.EndMenuBar()
         end
         local win_w, win_h = imgui.GetWindowSize()
-        local but_w, but_h = (win_w / 4) - 5, (win_h / 5) - (7 * 2)
+        local but_w, but_h = (win_w / 4) - 5, (win_h / 5) - 14
         for k = 0, 15 do
             -- TODO this can't be right
             if self.keypad.button_status[k] then
@@ -467,7 +467,8 @@ function ui:draw()
             local button_pressed = false
             if self.keypad.key_status[k] then
                 button_pressed = true
-                imgui.PushStyleColor("ImGuiCol_Button", 117 / 255, 138 / 255, 204 / 255, 1)
+                --imgui.PushStyleColor("ImGuiCol_Button", 117 / 255, 138 / 255, 204 / 255, 1)
+                imgui.PushStyleColor("ImGuiCol_Button", 0.4588, 0.5411, 0.8, 1)
             end
             self.keypad.button_status[k] = imgui.Button(string.format("%X", self.keypad.keys_dream.layout[k]), but_w, but_h)
             if self.keypad.button_status[k] then
