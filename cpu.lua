@@ -100,7 +100,7 @@ function CPU:fetch()
 end
 
 function CPU:decode(opcode)
-    if self.hcf then
+    if self.catch_fire then
         return {addr_mode = "inh"}
     end
 
