@@ -110,7 +110,7 @@ function ui:init(CPU, keypad)
     lg.setColor(1, 1, 1, 1)
 end
 
-function ui:update(dt)
+--function ui:update(dt)
     --local temp_key_status = {}
     --for k, v in pairs(button_status) do
     --    temp_key_status[k] = CPU.key_status[k]
@@ -124,7 +124,7 @@ function ui:update(dt)
     --for k, v in pairs(button_status) do
     --    CPU.key_status[k] = temp_key_status[k]
     --end
-end
+--end
 
 function ui:draw()
     local sound_playing = bit.band(self.CPU.memory[0x8012], 0x40) ~= 0 -- TODO read from pins, not bus
@@ -163,7 +163,7 @@ function ui:draw()
         self.showDisplayWindow = imgui.Begin("Display", nil, { "NoCollapse", "MenuBar" })--, { "ImGuiWindowFlags_AlwaysAutoResize" })
         if imgui.BeginMenuBar() then
             if imgui.BeginMenu("Effects") then
-                for k, _ in pairs(self.shaders) do
+                for k in pairs(self.shaders) do
                     if imgui.MenuItem(k, nil, self.shaders[k], true) then
                         self.shaders[k] = not self.shaders[k]
                         if self.shaders[k] then

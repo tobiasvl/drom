@@ -1,7 +1,7 @@
 local CPU = require 'cpu'
-local memory = require 'memory'
 local UI = require 'ui'
 local keypad = require 'keypad'
+local util = require 'util'
 
 local conf = require "conf"
 local t = {modules = {}, window = {}}
@@ -12,43 +12,26 @@ num_instructions = 0
 cycles = 0
 
 function love.load(arg)
-    local ram = require 'ram'(0x0FFF)
-    local eprom = require 'eprom'
-    local pia = require 'pia'
     --min_dt = 1/60--60 --fps
     --next_time = love.timer.getTime()
     --debug.debug()
 
+    local memory = require 'memory'
     CPU:init(memory)
 
+    local ram = require 'ram'(0x0FFF)
     memory:connect(0x0000, ram)
+
+    local pia = require 'pia'
     memory:connect(0x8010, pia.a)
     memory:connect(0x8012, pia.b)
 
     keypad:connect(pia.a)
 
-    local rom = {}
-    local file = love.filesystem.newFile("Dream6800Rom.bin")
-    local ok, err = file:open("r")
-    if ok then
-        local address = 0
-        while (not file:isEOF()) do 
-            local byte, len = file:read(1)
-            -- Dropped files don't seem to report EOF
-            if len ~= 1 or not string.byte(byte) then
-                break
-            end
-            rom[address] = string.byte(byte)
-            address = address + 1
-        end
-        rom.size = address
-        file:close()
-    else
-        print(err)
-    end
-
+    local rom = util.read_file("Dream6800Rom.bin")
+    local eprom = require 'eprom'(rom)
     for address = 0xC000, 0xFFFF - rom.size + 1, rom.size do
-        memory:connect(address, eprom(rom))
+        memory:connect(address, eprom)
     end
 
     UI:init(CPU, keypad)
@@ -56,17 +39,7 @@ function love.load(arg)
 end
 
 function love.filedropped(file)
-    CPU:init()
-
-    local ok, err = file:open("r")
-    if ok then
-        CPU:read_rom(file)
-        CPU.rom_loaded = true
-    else
-        print(err)
-        CPU.rom_loaded = false
-    end
-    file:close()
+    util.read_file(file) -- TODO
 end
 
 function love.update(dt)
