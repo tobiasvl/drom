@@ -43,7 +43,7 @@ function ui:init(CPU, keypad)
     disassembler:disassemble(CPU.memory)
 
     self.canvases = {
-        display = lg.newCanvas(64*8, 32*8),
+        display = lg.newCanvas(64 * 8, 32 * 8),
         speaker = lg.newCanvas(60, 60),
         speaker_mute = lg.newCanvas(60, 60),
         speaker_active = lg.newCanvas(60, 60),
@@ -139,6 +139,9 @@ function ui:draw()
     if self.showDisplayWindow then
         imgui.SetNextWindowPos(0, 20, "ImGuiCond_FirstUseEver")
         self.showDisplayWindow = imgui.Begin("Display", nil, { "NoCollapse", "MenuBar" })--, { "ImGuiWindowFlags_AlwaysAutoResize" })
+        local win_x, win_y = imgui.GetWindowSize()
+        win_x = win_x - 16
+        win_y = win_y - imgui.GetFrameHeight() * 2.8
         if imgui.BeginMenuBar() then
             if imgui.BeginMenu("Effects") then
                 for k in pairs(self.shaders) do
@@ -183,7 +186,7 @@ function ui:draw()
             lg.setCanvas()
             self.CPU.drawflag = false
         end
-        imgui.Image(self.canvases.display, 64*8 + 8, 32*8)
+        imgui.Image(self.canvases.display, win_x, win_y)
         imgui.End()
     end
 
