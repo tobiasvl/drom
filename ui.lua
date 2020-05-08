@@ -39,7 +39,7 @@ function ui:init(CPU, keypad)
     self.CPU = CPU
     self.keypad = keypad
 
-    disassembler:disassemble(self.CPU.memory)
+    disassembler:disassemble(CPU.memory)
 
     self.canvases = {
         display = lg.newCanvas(64*8, 32*8),

@@ -66,10 +66,6 @@ function CPU:init(memory)
     self.memory = memory
     instructions:init(self)
 
-    --for i = self.memory.ram.startAddress, self.memory.ram.size - 1 do
-    --    self.memory.ram[i] = love.math.random(0, 255)
-    --end
-
     self.reset = true
     self.instructions = 0
 end

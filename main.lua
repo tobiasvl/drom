@@ -48,19 +48,20 @@ function love.update(dt)
             cycles = cycles + CPU:cycle()
             num_instructions = num_instructions + 1
         end
+
         if cycles >= 1000000 / 50 then
             cycles = cycles - (1000000 / 50)
             --PIA should check its own interrupt flag and send IRQ til MPU...
             CPU.irq = true
         end
-        for k, v in pairs(keypad.button_status) do
-            if v then
+
+        for k = 0, 15 do
+            if keypad.button_status[k] then
                 keypad:keyreleased(keypad.keys_qwerty[k])
             end
         end
 
         CPU.drawflag = true
-
     end
 end
 
