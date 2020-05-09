@@ -32,7 +32,13 @@ end
 love.textinput = imgui.TextInput
 love.quit = imgui.ShutDown
 
-ui.KeyPressed = imgui.KeyPressed
+function ui:KeyPressed(key, scancode)
+    imgui.KeyPressed(key)
+    if key == "return" and (love.keyboard.isDown("ralt") or love.keyboard.isDown("lalt")) then
+        self.fullscreenDisplay = not self.fullscreenDisplay
+    end
+end
+
 ui.KeyReleased = imgui.KeyReleased
 ui.GetWantCaptureKeyboard = imgui.GetWantCaptureKeyboard
 
@@ -137,34 +143,21 @@ function ui:draw()
     imgui.NewFrame()
 
     if self.showDisplayWindow then
-        imgui.SetNextWindowPos(0, 20, "ImGuiCond_FirstUseEver")
-        self.showDisplayWindow = imgui.Begin("Display", nil, { "NoCollapse", "MenuBar" })--, { "ImGuiWindowFlags_AlwaysAutoResize" })
-        local win_x, win_y = imgui.GetWindowSize()
-        win_x = win_x - 16
-        win_y = win_y - imgui.GetFrameHeight() * 2.8
-        if imgui.BeginMenuBar() then
-            if imgui.BeginMenu("Effects") then
-                for k in pairs(self.shaders) do
-                    if imgui.MenuItem(k, nil, self.shaders[k], true) then
-                        self.shaders[k] = not self.shaders[k]
-                        if self.shaders[k] then
-                            self.effect.enable(k)
-                        else
-                            self.effect.disable(k)
-                        end
-                    end
-                end
-                imgui.EndMenu()
+        local win_x, win_y
+
+        if not self.fullscreenDisplay then
+            imgui.SetNextWindowPos(0, 20, "ImGuiCond_FirstUseEver")
+            self.showDisplayWindow = imgui.Begin("Display", nil, { "NoCollapse", (not self.fullscreenDisplay) and "MenuBar" })--, { "ImGuiWindowFlags_AlwaysAutoResize" })
+            win_x, win_y = imgui.GetWindowSize()
+            win_x = win_x - 16
+            win_y = win_y - imgui.GetFrameHeight() * 2.8
+
+            if imgui.BeginMenuBar() then
+                self:drawDisplayMenu()
+                imgui.EndMenuBar()
             end
-            if imgui.BeginMenu("Tools") then
-                if imgui.MenuItem("Save screenshot", nil, false, true) then
-                    self.canvases.display:newImageData():encode('png', os.time() .. ".png")
-                end
-                imgui.EndMenu()
-            end
-            imgui.EndMenuBar()
         end
-        --local win_x, win_y = imgui.GetWindowSize()
+
         if self.CPU.display and self.CPU.drawflag then
             lg.setCanvas(self.canvases.display)
             lg.clear()
@@ -186,336 +179,348 @@ function ui:draw()
             lg.setCanvas()
             self.CPU.drawflag = false
         end
-        imgui.Image(self.canvases.display, win_x, win_y)
-        imgui.End()
-    end
 
-    if self.showSpeakerWindow then
-        imgui.SetNextWindowPos(0, 20, "ImGuiCond_FirstUseEver")
-        self.showSpeakerWindow = imgui.Begin("Speaker", true, { })--, { "ImGuiWindowFlags_AlwaysAutoResize" })
-
-        local toggle = false
-        if self.speaker.mute then
-            if sound_playing then
-                toggle = imgui.ImageButton(self.canvases.speaker_mute_active, 60, 60)
-            else
-                toggle = imgui.ImageButton(self.canvases.speaker_mute, 60, 60)
-            end
+        if self.fullscreenDisplay then
+            love.graphics.draw(
+                self.canvases.display,
+                0, imgui.GetFrameHeight(), nil,
+                love.graphics.getWidth() / (64 * 8),
+                love.graphics.getHeight() / ((32 * 8) + 8)
+            )
         else
-            if sound_playing then
-                toggle = imgui.ImageButton(self.canvases.speaker_active, 60, 60)
-            else
-                toggle = imgui.ImageButton(self.canvases.speaker, 60, 60)
-            end
+            imgui.Image(self.canvases.display, win_x, win_y)
+            imgui.End()
         end
-        if toggle then self.speaker.mute = not self.speaker.mute end
-
-        imgui.End()
     end
 
-    if self.showCPUWindow then
-        imgui.SetNextWindowSize(200, 200, "ImGuiCond_FirstUseEver")
-        self.showCPUWindow = imgui.Begin("CPU", true)
-        imgui.Text(string.format("Cycles: %d", cycles))
-        for _, reg in ipairs({"a", "b"}) do
-            local register = self.CPU.registers[reg]
-            local reg_changed = register() ~= register.prev_value and num_instructions == register.prev_inst + 1
-            if reg_changed then
-                imgui.PushStyleColor("ImGui_Text", 1, 0, 0, 1)
-            end
-            imgui.Text(string.format(" %s:      ", reg))
-            imgui.SameLine()
-            local text, textinput = imgui.InputText("##reg-" .. reg, string.format("%02X", register()), 3, hex_input_flags)
-            if reg_changed then
-                imgui.PopStyleColor()
-            end
-            if textinput then
-                register(tonumber(text, 16))
-            end
-        end
-        for _, reg in ipairs({"pc", "sp", "ix"}) do
-            local register = self.CPU.registers[reg]
-            local reg_changed = register() ~= register.prev_value and num_instructions == register.prev_inst + 1
-            if reg_changed then
-                imgui.PushStyleColor("ImGui_Text", 1, 0, 0, 1)
-            end
-            imgui.Text(string.format("%s:    ", reg))
-            imgui.SameLine()
-            local text, textinput = imgui.InputText("##reg-" .. reg, string.format("%04X", register()), 5, hex_input_flags)
-            if reg_changed then
-                imgui.PopStyleColor()
-            end
-            if textinput then
-                register(tonumber(text, 16))
-            end
-        end
-        local s = ""
-        for i, cc in ipairs({"h", "i", "n", "z", "v", "c"}) do
-            s = s .. (self.CPU.registers.status[cc] and "1" or "0")
-        end
-        imgui.Text(string.format("CC: 11%s", s))--string.format("CC: %02X", self.CPU.registers.status()))
-        imgui.Text("      HINZVC")
-        if self.CPU.irq then
-            imgui.PushStyleColor("ImGui_Text", 1, 0, 0, 1)
-        end
-        imgui.Text("IRQ")
-        if self.CPU.irq then
-            imgui.PopStyleColor()
-        end
-        imgui.SameLine()
-        if self.CPU.reset then
-            imgui.PushStyleColor("ImGui_Text", 1, 0, 0, 1)
-        end
-        imgui.Text("RST")
-        if self.CPU.reset then
-            imgui.PopStyleColor()
-        end
-        imgui.End()
-    end
+    if not self.fullscreenDisplay then
+        if self.showSpeakerWindow then
+            imgui.SetNextWindowPos(0, 20, "ImGuiCond_FirstUseEver")
+            self.showSpeakerWindow = imgui.Begin("Speaker", true, { })--, { "ImGuiWindowFlags_AlwaysAutoResize" })
 
-    if self.showPIAWindow then
-        imgui.SetNextWindowSize(200, 200, "ImGuiCond_FirstUseEver")
-        self.showPIAWindow = imgui.Begin("PIA", true)
-        imgui.End()
-    end
-
-    if self.showInstructionsWindow then
-        imgui.SetNextWindowSize(200, 200, "ImGuiCond_FirstUseEver")
-        self.showInstructionsWindow = imgui.Begin("Instructions", true, "MenuBar")
-        if imgui.BeginMenuBar() then
-            if imgui.BeginMenu("Settings") then
-                if imgui.MenuItem("Follow PC", nil, self.followPC, true) then
-                    self.followPC = not self.followPC
-                end
-                imgui.EndMenu()
-            end
-            imgui.EndMenuBar()
-        end
-        imgui.Text("Breakpoint: ")
-        imgui.SameLine()
-        imgui.PushItemWidth(4 * 9) -- TODO get char width
-        local text, textinput = imgui.InputText("##breakpoint", self.CPU.breakpoint and string.format("%04X", self.CPU.breakpoint) or "", 5, hex_input_flags)
-        imgui.PopItemWidth()
-        if textinput then
-            self.CPU.breakpoint = tonumber(text, 16)
-        end
-
-        local padding = 2 -- Vertical space taken up by breakpoint and jump
-        local font_height = imgui.GetFontSize() + 4
-        imgui.BeginChild("##instructions", 0, -(font_height * padding))
-        local win_w, win_h = imgui.GetWindowSize()
-        local line = math.floor(imgui.GetScrollY() / font_height)
-        local j = 0
-        for i = 0, 0xFFFF do -- TODO only to the largest mapped memory?
-            if self.instructionsScrollNow and self.instructionsScroll == i - math.floor(win_h / font_height / 2) - 1 then
-                imgui.SetScrollHere()
-                line = self.instructionsScroll
-                self.instructionsScrollNow = false
-            end
-            if disassembler.memory[i] then
-                if i == self.CPU.registers.pc() then
-                    imgui.Text(">")
-                    if self.followPC then
-                        imgui.SetScrollHere()
-                    end
-                elseif i == self.CPU.breakpoint then
-                    imgui.Text("!")
+            local toggle = false
+            if self.speaker.mute then
+                if sound_playing then
+                    toggle = imgui.ImageButton(self.canvases.speaker_mute_active, 60, 60)
                 else
-                    imgui.Text(" ")
+                    toggle = imgui.ImageButton(self.canvases.speaker_mute, 60, 60)
                 end
-                -- Cull output so we don't bog down the UI
-                if j > line - 1 and j < line + (win_h / font_height) + 1 then
-                    imgui.SameLine()
-                    imgui.Text(string.format("%04X: ", i) .. disassembler.memory[i])
+            else
+                if sound_playing then
+                    toggle = imgui.ImageButton(self.canvases.speaker_active, 60, 60)
+                else
+                    toggle = imgui.ImageButton(self.canvases.speaker, 60, 60)
                 end
-                j = j + 1
             end
-        end
-        imgui.EndChild()
-        -- Scroll
-        imgui.Text("Scroll to: ")
-        imgui.SameLine()
-        imgui.PushItemWidth(4 * 9) -- TODO get char width
-        local scroll, scroll_input = imgui.InputText("##instructionscroll", string.format("%04X", self.instructionsScroll or 0), 5, hex_input_flags)
-        imgui.PopItemWidth()
-        if scroll_input then
-            self.instructionsScroll = tonumber(scroll, 16)
-            self.instructionsScrollNow = true
-        end
-        imgui.End()
-    end
+            if toggle then self.speaker.mute = not self.speaker.mute end
 
-    if self.showMemoryWindow then
-        imgui.SetNextWindowSize(200, 200, "ImGuiCond_FirstUseEver")
-        self.showMemoryWindow = imgui.Begin("Memory", true, "MenuBar")
-        if imgui.BeginMenuBar() then
-            if imgui.BeginMenu("Settings") then
-                if imgui.MenuItem("Random uninitialized memory", nil, self.ram.uninitialized_random, true) then
-                    self.ram:set_uninitialized_value(self.ram.uninitialized_random and 0 or nil)
-                end
-                imgui.EndMenu()
-            end
-            imgui.EndMenuBar()
+            imgui.End()
         end
 
-        -- Memory breakpoint
-        imgui.Text("Breakpoint: ")
-        imgui.SameLine()
-        imgui.PushItemWidth(4 * 9) -- TODO get char width
-        local breakpoint = self.CPU.memory.breakpoint
-        local new_breakpoint, breakpoint_input = imgui.InputText("##membreakpoint", breakpoint.address and string.format("%04X", breakpoint.address) or "", 5, hex_input_flags)
-        imgui.PopItemWidth()
-        if breakpoint_input then
-            breakpoint.address = tonumber(new_breakpoint, 16)
-        end
-        imgui.SameLine()
-        breakpoint.read = imgui.Checkbox("R", breakpoint.read)
-        imgui.SameLine()
-        breakpoint.write = imgui.Checkbox("W", breakpoint.write)
-
-        -- Memory viewer
-        local padding = 3 -- Vertical space taken up by breakpoint and jump
-        local font_height = imgui.GetFontSize() + 4
-        imgui.BeginChild("##memory", 0, -(font_height * padding))
-        local win_w, win_h = imgui.GetWindowSize()
-        local line = math.floor(imgui.GetScrollY() / font_height)
-        for i = 0, 0xFFFF do -- TODO only to the largest mapped memory?
-            -- Set scroll if user has jumped to an address
-            -- imgui.SetScrollHere() sets it immediately, and centers the viewport
-            -- We want the address to be at the top (do we really?) so maths
-            if self.memoryScrollNow and self.memoryScroll == i - math.floor(win_h / font_height / 2) - 1 then
-                imgui.SetScrollHere()
-                line = self.memoryScroll
-                self.memoryScrollNow = false
-            end
-            -- Cull output so we don't bog down the UI
-            if i > line - 1 and i < line + (win_h / font_height) + 1 then
-                local c = self.CPU.memory[i]
-                if i < self.ram.size and not self.ram.initialized[i] then
-                    imgui.PushStyleColor("ImGui_Text", 0.50, 0.50, 0.50, 1)
+        if self.showCPUWindow then
+            imgui.SetNextWindowSize(200, 200, "ImGuiCond_FirstUseEver")
+            self.showCPUWindow = imgui.Begin("CPU", true)
+            imgui.Text(string.format("Cycles: %d", cycles))
+            for _, reg in ipairs({"a", "b"}) do
+                local register = self.CPU.registers[reg]
+                local reg_changed = register() ~= register.prev_value and num_instructions == register.prev_inst + 1
+                if reg_changed then
+                    imgui.PushStyleColor("ImGui_Text", 1, 0, 0, 1)
                 end
-                imgui.Text(string.format("%04X: %02X %03d", i, c, c))
+                imgui.Text(string.format(" %s:      ", reg))
                 imgui.SameLine()
-                -- Print only printable ASCII characters
-                if c > 31 and c < 127 then imgui.Text(string.char(c) .. " ") else imgui.Text("  ") end
-                imgui.SameLine()
-                local byte = {}
-                for j = 1, 8 do
-                    byte[j] = bit.band(bit.rshift(c, 7 - j + 1), 1)
-                end
-                imgui.Text(table.concat(byte))
-                if i < self.ram.size and not self.ram.initialized[i] then
+                local text, textinput = imgui.InputText("##reg-" .. reg, string.format("%02X", register()), 3, hex_input_flags)
+                if reg_changed then
                     imgui.PopStyleColor()
                 end
-            else
-                imgui.Text("")
+                if textinput then
+                    register(tonumber(text, 16))
+                end
             end
+            for _, reg in ipairs({"pc", "sp", "ix"}) do
+                local register = self.CPU.registers[reg]
+                local reg_changed = register() ~= register.prev_value and num_instructions == register.prev_inst + 1
+                if reg_changed then
+                    imgui.PushStyleColor("ImGui_Text", 1, 0, 0, 1)
+                end
+                imgui.Text(string.format("%s:    ", reg))
+                imgui.SameLine()
+                local text, textinput = imgui.InputText("##reg-" .. reg, string.format("%04X", register()), 5, hex_input_flags)
+                if reg_changed then
+                    imgui.PopStyleColor()
+                end
+                if textinput then
+                    register(tonumber(text, 16))
+                end
+            end
+            local s = ""
+            for i, cc in ipairs({"h", "i", "n", "z", "v", "c"}) do
+                s = s .. (self.CPU.registers.status[cc] and "1" or "0")
+            end
+            imgui.Text(string.format("CC: 11%s", s))--string.format("CC: %02X", self.CPU.registers.status()))
+            imgui.Text("      HINZVC")
+            if self.CPU.irq then
+                imgui.PushStyleColor("ImGui_Text", 1, 0, 0, 1)
+            end
+            imgui.Text("IRQ")
+            if self.CPU.irq then
+                imgui.PopStyleColor()
+            end
+            imgui.SameLine()
+            if self.CPU.reset then
+                imgui.PushStyleColor("ImGui_Text", 1, 0, 0, 1)
+            end
+            imgui.Text("RST")
+            if self.CPU.reset then
+                imgui.PopStyleColor()
+            end
+            imgui.End()
         end
-        -- If we should scroll but haven't yet, we want to scroll to the end
-        if self.memoryScrollNow then
-            imgui.SetScrollHere(1)
-            self.memoryScrollNow = false
-        end
-        imgui.EndChild()
 
-        -- Scroll
-        imgui.Text("Scroll to: ")
-        imgui.SameLine()
-        imgui.PushItemWidth(4 * 9) -- TODO get char width
-        local scroll, scroll_input = imgui.InputText("##memscroll", string.format("%04X", self.memoryScroll or 0), 5, hex_input_flags)
-        imgui.PopItemWidth()
-        if scroll_input then
-            self.memoryScroll = tonumber(scroll, 16)
-            self.memoryScrollNow = true
-        end
-        if imgui.Button("RAM") then
-            self.memoryScroll = 0
-            self.memoryScrollNow = true
-        end
-        imgui.SameLine()
-        if imgui.Button("CHIP-8") then
-            self.memoryScroll = 0x0200
-            self.memoryScrollNow = true
-        end
-        imgui.SameLine()
-        if imgui.Button("ROM") then
-            self.memoryScroll = 0xC000
-            self.memoryScrollNow = true
+        if self.showPIAWindow then
+            imgui.SetNextWindowSize(200, 200, "ImGuiCond_FirstUseEver")
+            self.showPIAWindow = imgui.Begin("PIA", true)
+            imgui.End()
         end
 
-        imgui.End()
-    end
+        if self.showInstructionsWindow then
+            imgui.SetNextWindowSize(200, 200, "ImGuiCond_FirstUseEver")
+            self.showInstructionsWindow = imgui.Begin("Instructions", true, "MenuBar")
+            if imgui.BeginMenuBar() then
+                if imgui.BeginMenu("Settings") then
+                    if imgui.MenuItem("Follow PC", nil, self.followPC, true) then
+                        self.followPC = not self.followPC
+                    end
+                    imgui.EndMenu()
+                end
+                imgui.EndMenuBar()
+            end
+            imgui.Text("Breakpoint: ")
+            imgui.SameLine()
+            imgui.PushItemWidth(4 * 9) -- TODO get char width
+            local text, textinput = imgui.InputText("##breakpoint", self.CPU.breakpoint and string.format("%04X", self.CPU.breakpoint) or "", 5, hex_input_flags)
+            imgui.PopItemWidth()
+            if textinput then
+                self.CPU.breakpoint = tonumber(text, 16)
+            end
 
-    if self.showKeypadWindow then
-        imgui.SetNextWindowPos(540, 300, "ImGuiCond_FirstUseEver")
-        self.showKeypadWindow = imgui.Begin("Keypad", true, { "NoScrollbar", "MenuBar" })
-        if imgui.BeginMenuBar() then
-            if imgui.BeginMenu("Layout") then
-                if imgui.MenuItem("Digitran", nil, self.keypad.keys_dream == self.keypad.keys_digitran, true) then
-                    self.keypad.keys_dream = self.keypad.keys_digitran
+            local padding = 2 -- Vertical space taken up by breakpoint and jump
+            local font_height = imgui.GetFontSize() + 4
+            imgui.BeginChild("##instructions", 0, -(font_height * padding))
+            local win_w, win_h = imgui.GetWindowSize()
+            local line = math.floor(imgui.GetScrollY() / font_height)
+            local j = 0
+            for i = 0, 0xFFFF do -- TODO only to the largest mapped memory?
+                if self.instructionsScrollNow and self.instructionsScroll == i - math.floor(win_h / font_height / 2) - 1 then
+                    imgui.SetScrollHere()
+                    line = self.instructionsScroll
+                    self.instructionsScrollNow = false
+                end
+                if disassembler.memory[i] then
+                    if i == self.CPU.registers.pc() then
+                        imgui.Text(">")
+                        if self.followPC then
+                            imgui.SetScrollHere()
+                        end
+                    elseif i == self.CPU.breakpoint then
+                        imgui.Text("!")
+                    else
+                        imgui.Text(" ")
+                    end
+                    -- Cull output so we don't bog down the UI
+                    if j > line - 1 and j < line + (win_h / font_height) + 1 then
+                        imgui.SameLine()
+                        imgui.Text(string.format("%04X: ", i) .. disassembler.memory[i])
+                    end
+                    j = j + 1
+                end
+            end
+            imgui.EndChild()
+            -- Scroll
+            imgui.Text("Scroll to: ")
+            imgui.SameLine()
+            imgui.PushItemWidth(4 * 9) -- TODO get char width
+            local scroll, scroll_input = imgui.InputText("##instructionscroll", string.format("%04X", self.instructionsScroll or 0), 5, hex_input_flags)
+            imgui.PopItemWidth()
+            if scroll_input then
+                self.instructionsScroll = tonumber(scroll, 16)
+                self.instructionsScrollNow = true
+            end
+            imgui.End()
+        end
+
+        if self.showMemoryWindow then
+            imgui.SetNextWindowSize(200, 200, "ImGuiCond_FirstUseEver")
+            self.showMemoryWindow = imgui.Begin("Memory", true, "MenuBar")
+            if imgui.BeginMenuBar() then
+                if imgui.BeginMenu("Settings") then
+                    if imgui.MenuItem("Random uninitialized memory", nil, self.ram.uninitialized_random, true) then
+                        self.ram:set_uninitialized_value(self.ram.uninitialized_random and 0 or nil)
+                    end
+                    imgui.EndMenu()
+                end
+                imgui.EndMenuBar()
+            end
+
+            -- Memory breakpoint
+            imgui.Text("Breakpoint: ")
+            imgui.SameLine()
+            imgui.PushItemWidth(4 * 9) -- TODO get char width
+            local breakpoint = self.CPU.memory.breakpoint
+            local new_breakpoint, breakpoint_input = imgui.InputText("##membreakpoint", breakpoint.address and string.format("%04X", breakpoint.address) or "", 5, hex_input_flags)
+            imgui.PopItemWidth()
+            if breakpoint_input then
+                breakpoint.address = tonumber(new_breakpoint, 16)
+            end
+            imgui.SameLine()
+            breakpoint.read = imgui.Checkbox("R", breakpoint.read)
+            imgui.SameLine()
+            breakpoint.write = imgui.Checkbox("W", breakpoint.write)
+
+            -- Memory viewer
+            local padding = 3 -- Vertical space taken up by breakpoint and jump
+            local font_height = imgui.GetFontSize() + 4
+            imgui.BeginChild("##memory", 0, -(font_height * padding))
+            local win_w, win_h = imgui.GetWindowSize()
+            local line = math.floor(imgui.GetScrollY() / font_height)
+            for i = 0, 0xFFFF do -- TODO only to the largest mapped memory?
+                -- Set scroll if user has jumped to an address
+                -- imgui.SetScrollHere() sets it immediately, and centers the viewport
+                -- We want the address to be at the top (do we really?) so maths
+                if self.memoryScrollNow and self.memoryScroll == i - math.floor(win_h / font_height / 2) - 1 then
+                    imgui.SetScrollHere()
+                    line = self.memoryScroll
+                    self.memoryScrollNow = false
+                end
+                -- Cull output so we don't bog down the UI
+                if i > line - 1 and i < line + (win_h / font_height) + 1 then
+                    local c = self.CPU.memory[i]
+                    if i < self.ram.size and not self.ram.initialized[i] then
+                        imgui.PushStyleColor("ImGui_Text", 0.50, 0.50, 0.50, 1)
+                    end
+                    imgui.Text(string.format("%04X: %02X %03d", i, c, c))
+                    imgui.SameLine()
+                    -- Print only printable ASCII characters
+                    if c > 31 and c < 127 then imgui.Text(string.char(c) .. " ") else imgui.Text("  ") end
+                    imgui.SameLine()
+                    local byte = {}
+                    for j = 1, 8 do
+                        byte[j] = bit.band(bit.rshift(c, 7 - j + 1), 1)
+                    end
+                    imgui.Text(table.concat(byte))
+                    if i < self.ram.size and not self.ram.initialized[i] then
+                        imgui.PopStyleColor()
+                    end
+                else
+                    imgui.Text("")
+                end
+            end
+            -- If we should scroll but haven't yet, we want to scroll to the end
+            if self.memoryScrollNow then
+                imgui.SetScrollHere(1)
+                self.memoryScrollNow = false
+            end
+            imgui.EndChild()
+
+            -- Scroll
+            imgui.Text("Scroll to: ")
+            imgui.SameLine()
+            imgui.PushItemWidth(4 * 9) -- TODO get char width
+            local scroll, scroll_input = imgui.InputText("##memscroll", string.format("%04X", self.memoryScroll or 0), 5, hex_input_flags)
+            imgui.PopItemWidth()
+            if scroll_input then
+                self.memoryScroll = tonumber(scroll, 16)
+                self.memoryScrollNow = true
+            end
+            if imgui.Button("RAM") then
+                self.memoryScroll = 0
+                self.memoryScrollNow = true
+            end
+            imgui.SameLine()
+            if imgui.Button("CHIP-8") then
+                self.memoryScroll = 0x0200
+                self.memoryScrollNow = true
+            end
+            imgui.SameLine()
+            if imgui.Button("ROM") then
+                self.memoryScroll = 0xC000
+                self.memoryScrollNow = true
+            end
+
+            imgui.End()
+        end
+
+        if self.showKeypadWindow then
+            imgui.SetNextWindowPos(540, 300, "ImGuiCond_FirstUseEver")
+            self.showKeypadWindow = imgui.Begin("Keypad", true, { "NoScrollbar", "MenuBar" })
+            if imgui.BeginMenuBar() then
+                if imgui.BeginMenu("Layout") then
+                    if imgui.MenuItem("Digitran", nil, self.keypad.keys_dream == self.keypad.keys_digitran, true) then
+                        self.keypad.keys_dream = self.keypad.keys_digitran
+                    end
+                    if imgui.IsItemHovered() then
+                        imgui.SetTooltip("Used in many DREAM builds; de facto standard.\nStandard layout in the DREAMER newsletter.\nAlso used by the 40th anniversary DREAM reproduction")
+                    end
+                    if imgui.MenuItem("Original", nil, self.keypad.keys_dream == self.keypad.keys_original, true) then
+                        self.keypad.keys_dream = self.keypad.keys_original
+                    end
+                    if imgui.IsItemHovered() then
+                        imgui.SetTooltip("The layout used in the Electronics Australia articles.\nUsed by the prototype DREAM 6800, and the CHIP-8 Classic Computer.")
+                    end
+                    if imgui.MenuItem("COSMAC VIP", nil, self.keypad.keys_dream == self.keypad.keys_cosmac, true) then
+                        self.keypad.keys_dream = self.keypad.keys_cosmac
+                    end
+                    if imgui.IsItemHovered() then
+                        imgui.SetTooltip("Used by RCA's COSMAC VIP, the DREAM's predecessor.\nUseful for CHIP-8 compatibility.")
+                    end
+                    imgui.EndMenu()
+                end
+                imgui.EndMenuBar()
+            end
+            local win_w, win_h = imgui.GetWindowSize()
+            local but_w, but_h = (win_w / 4) - 5, (win_h / 5) - 14
+            for k = 0, 15 do
+                -- TODO this can't be right
+                if self.keypad.button_status[k] then
+                    self.keypad.button_status[k] = false
+                    self.keypad:keyreleased(nil, self.keypad.keys_qwerty[k])
+                end
+                local button_pressed = false
+                if self.keypad.key_status[k] then
+                    button_pressed = true
+                    --imgui.PushStyleColor("ImGuiCol_Button", 117 / 255, 138 / 255, 204 / 255, 1)
+                    imgui.PushStyleColor("ImGuiCol_Button", 0.4588, 0.5411, 0.8, 1)
+                end
+                self.keypad.button_status[k] = imgui.Button(string.format("%X", self.keypad.keys_dream.layout[k]), but_w, but_h)
+                if self.keypad.button_status[k] then
+                    self.keypad:keypressed(nil, self.keypad.keys_qwerty[k])
+                end
+                if button_pressed then
+                    imgui.PopStyleColor(1)
                 end
                 if imgui.IsItemHovered() then
-                    imgui.SetTooltip("Used in many DREAM builds; de facto standard.\nStandard layout in the DREAMER newsletter.\nAlso used by the 40th anniversary DREAM reproduction")
+                    imgui.SetTooltip(self.keypad.keys_qwerty[k])
                 end
-                if imgui.MenuItem("Original", nil, self.keypad.keys_dream == self.keypad.keys_original, true) then
-                    self.keypad.keys_dream = self.keypad.keys_original
+                if (k + 1) % 4 ~= 0 then
+                    imgui.SameLine(0, 4)
                 end
-                if imgui.IsItemHovered() then
-                    imgui.SetTooltip("The layout used in the Electronics Australia articles.\nUsed by the prototype DREAM 6800, and the CHIP-8 Classic Computer.")
-                end
-                if imgui.MenuItem("COSMAC VIP", nil, self.keypad.keys_dream == self.keypad.keys_cosmac, true) then
-                    self.keypad.keys_dream = self.keypad.keys_cosmac
-                end
-                if imgui.IsItemHovered() then
-                    imgui.SetTooltip("Used by RCA's COSMAC VIP, the DREAM's predecessor.\nUseful for CHIP-8 compatibility.")
-                end
-                imgui.EndMenu()
             end
-            imgui.EndMenuBar()
-        end
-        local win_w, win_h = imgui.GetWindowSize()
-        local but_w, but_h = (win_w / 4) - 5, (win_h / 5) - 14
-        for k = 0, 15 do
-            -- TODO this can't be right
-            if self.keypad.button_status[k] then
-                self.keypad.button_status[k] = false
-                self.keypad:keyreleased(nil, self.keypad.keys_qwerty[k])
-            end
-            local button_pressed = false
-            if self.keypad.key_status[k] then
-                button_pressed = true
-                --imgui.PushStyleColor("ImGuiCol_Button", 117 / 255, 138 / 255, 204 / 255, 1)
-                imgui.PushStyleColor("ImGuiCol_Button", 0.4588, 0.5411, 0.8, 1)
-            end
-            self.keypad.button_status[k] = imgui.Button(string.format("%X", self.keypad.keys_dream.layout[k]), but_w, but_h)
-            if self.keypad.button_status[k] then
-                self.keypad:keypressed(nil, self.keypad.keys_qwerty[k])
-            end
-            if button_pressed then
-                imgui.PopStyleColor(1)
+            imgui.Dummy(0, 2)
+            if imgui.Button("FN", (but_w * 2) + 4, but_h) then
+                self.keypad:keypressed(nil, "lshift")
             end
             if imgui.IsItemHovered() then
-                imgui.SetTooltip(self.keypad.keys_qwerty[k])
+                imgui.SetTooltip("shift")
             end
-            if (k + 1) % 4 ~= 0 then
-                imgui.SameLine(0, 4)
+            imgui.SameLine(0, 4)
+            if imgui.Button("RESET", (but_w * 2) + 4, but_h) then
+                self.CPU.reset = true
             end
+            if imgui.IsItemHovered() then
+                imgui.SetTooltip("escape")
+            end
+            imgui.End()
         end
-        imgui.Dummy(0, 2)
-        if imgui.Button("FN", (but_w * 2) + 4, but_h) then
-            self.keypad:keypressed(nil, "lshift")
-        end
-        if imgui.IsItemHovered() then
-            imgui.SetTooltip("shift")
-        end
-        imgui.SameLine(0, 4)
-        if imgui.Button("RESET", (but_w * 2) + 4, but_h) then
-            self.CPU.reset = true
-        end
-        if imgui.IsItemHovered() then
-            imgui.SetTooltip("escape")
-        end
-        imgui.End()
     end
 
     if imgui.BeginMainMenuBar() then
@@ -545,26 +550,30 @@ function ui:draw()
             end
             imgui.EndMenu()
         end
-        if imgui.BeginMenu("Windows") then
+        if self.fullscreenDisplay and imgui.BeginMenu("Display") then
+            self:drawDisplayMenu()
+            imgui.EndMenu()
+        end
+        if imgui.BeginMenu("Windows", not self.fullscreenDisplay) then
             if imgui.MenuItem("Display", nil, self.showDisplayWindow, false) then
                 self.showDisplayWindow = not self.showDisplayWindow
             end
-            if imgui.MenuItem("CPU", nil, self.showCPUWindow, true) then
+            if imgui.MenuItem("CPU", nil, self.showCPUWindow and not self.fullscreenDisplay, not self.fullscreenDisplay) then
                 self.showCPUWindow = not self.showCPUWindow
             end
-            if imgui.MenuItem("PIA", nil, self.showPIAWindow, true) then
+            if imgui.MenuItem("PIA", nil, self.showPIAWindow and not self.fullscreenDisplay, not self.fullscreenDisplay) then
                 self.showPIAWindow = not self.showPIAWindow
             end
-            if imgui.MenuItem("Keypad", nil, self.showKeypadWindow, true) then
+            if imgui.MenuItem("Keypad", nil, self.showKeypadWindow and not self.fullscreenDisplay, not self.fullscreenDisplay) then
                 self.showKeypadWindow = not self.showKeypadWindow
             end
-            if imgui.MenuItem("Instructions", nil, self.showInstructionsWindow, true) then
+            if imgui.MenuItem("Instructions", nil, self.showInstructionsWindow and not self.fullscreenDisplay, not self.fullscreenDisplay) then
                 self.showInstructionsWindow = not self.showInstructionsWindow
             end
-            if imgui.MenuItem("Memory", nil, self.showMemoryWindow, true) then
+            if imgui.MenuItem("Memory", nil, self.showMemoryWindow and not self.fullscreenDisplay, not self.fullscreenDisplay) then
                 self.showMemoryWindow = not self.showMemoryWindow
             end
-            if imgui.MenuItem("Speaker", nil, self.showSpeakerWindow, true) then
+            if imgui.MenuItem("Speaker", nil, self.showSpeakerWindow and not self.fullscreenDisplay, not self.fullscreenDisplay) then
                 self.showSpeakerWindow = not self.showSpeakerWindow
             end
             imgui.EndMenu()
@@ -625,5 +634,31 @@ function ui:draw()
 
     imgui.Render()
 end
+
+function ui:drawDisplayMenu()
+    if imgui.BeginMenu("Effects") then
+        for k in pairs(self.shaders) do
+            if imgui.MenuItem(k, nil, self.shaders[k], true) then
+                self.shaders[k] = not self.shaders[k]
+                if self.shaders[k] then
+                    self.effect.enable(k)
+                else
+                    self.effect.disable(k)
+                end
+            end
+        end
+        imgui.EndMenu()
+    end
+    if imgui.BeginMenu("Tools") then
+        if imgui.MenuItem("Save screenshot", nil, false, true) then
+            self.canvases.display:newImageData():encode('png', os.time() .. ".png")
+        end
+        if imgui.MenuItem("Fill screen", "Alt + Enter", self.fullscreenDisplay, true) then
+            self.fullscreenDisplay = not self.fullscreenDisplay
+        end
+        imgui.EndMenu()
+    end
+end
+
 
 return ui

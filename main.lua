@@ -75,7 +75,7 @@ function love.draw()
 end
 
 function love.keypressed(key, scancode)
-    UI.KeyPressed(key)
+    UI:KeyPressed(key, scancode)
     if not UI.GetWantCaptureKeyboard() then
         keypad:keypressed(key, scancode)
         if key == "space" then
