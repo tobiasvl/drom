@@ -74,6 +74,8 @@ function ui:init(CPU, keypad)
     self.memoryScroll = 0
     self.memoryScrollNow = false
 
+    self.followPC = true
+
     self.effect = moonshine(64*8, 32*8, moonshine.effects.scanlines)
         .chain(moonshine.effects.glow)
         .chain(moonshine.effects.chromasep)
