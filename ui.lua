@@ -66,6 +66,7 @@ function ui:init(CPU, keypad)
     self.showDisplayWindow = true
     self.showKeypadWindow = true
     self.showCPUWindow = true
+    self.showCHIPOSWindow = true
     self.showPIAWindow = true
     self.showInstructionsWindow = true
     self.showMemoryWindow = true
@@ -275,6 +276,22 @@ function ui:draw()
             imgui.Text("RST")
             if self.CPU.reset then
                 imgui.PopStyleColor()
+            end
+            imgui.End()
+        end
+
+        if self.showCHIPOSWindow then
+            imgui.SetNextWindowSize(200, 200, "ImGuiCond_FirstUseEver")
+            self.showCHIPOSWindow = imgui.Begin("CHIPOS", true)
+            imgui.Text(string.format("PC: %02X%02X", self.CPU.memory[0x0022], self.CPU.memory[0x0023]))
+            imgui.SameLine()
+            imgui.Text(string.format("SP: %02X%02X", self.CPU.memory[0x0024], self.CPU.memory[0x0025]))
+            imgui.Text(string.format("I:  %02X%02X", self.CPU.memory[0x0026], self.CPU.memory[0x0027]))
+            for i = 0, 0xF do
+                imgui.Text(string.format("V%01X:   %02X", i, self.CPU.memory[0x0030 + i]))
+                if i % 2 == 0 then
+                    imgui.SameLine()
+                end
             end
             imgui.End()
         end
@@ -560,8 +577,11 @@ function ui:draw()
             if imgui.MenuItem("Display", nil, self.showDisplayWindow, false) then
                 self.showDisplayWindow = not self.showDisplayWindow
             end
-            if imgui.MenuItem("CPU", nil, self.showCPUWindow and not self.fullscreenDisplay, not self.fullscreenDisplay) then
+            if imgui.MenuItem("CPU status", nil, self.showCPUWindow and not self.fullscreenDisplay, not self.fullscreenDisplay) then
                 self.showCPUWindow = not self.showCPUWindow
+            end
+            if imgui.MenuItem("CHIPOS/CHIP-8 status", nil, self.showCHIPOSWindow and not self.fullscreenDisplay, not self.fullscreenDisplay) then
+                self.showCHIPOSWindow = not self.showCHIPOSWindow
             end
             if imgui.MenuItem("PIA", nil, self.showPIAWindow and not self.fullscreenDisplay, not self.fullscreenDisplay) then
                 self.showPIAWindow = not self.showPIAWindow
