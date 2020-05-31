@@ -28,6 +28,7 @@ function love.load(arg)
 
     keypad:connect(pia.a)
 
+    -- ROM and ROM mirrors
     local rom = util.read_file("Dream6800Rom.bin")
     local eprom = require 'eprom'(rom)
     for address = 0xC000, 0xFFFF - rom.size + 1, rom.size do

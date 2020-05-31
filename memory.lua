@@ -1,6 +1,6 @@
 local memory = setmetatable({
     memory_map = {},
-    ram = nil, -- TODO very ugly, just for checking initialized memory
+    ram = false, -- TODO very ugly, just for checking initialized memory
     breakpoint = {
         address = nil,
         read = false,
@@ -13,7 +13,7 @@ local memory = setmetatable({
         }] = module
         -- TODO ugly hack
         if startAddress == 0 then
-            rawset(self, "ram", module)
+            self.ram = module
         end
     end
 }, {
