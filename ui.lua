@@ -2,6 +2,8 @@ local imgui = require "imgui"
 local util = require 'util'
 local moonshine = require 'moonshine'
 local disassembler = require "disassembler"
+local Filedialog = require 'imgui-filedialog.filedialog'
+local filedialog
 
 local lg = love.graphics
 
@@ -118,6 +120,19 @@ function ui:init(CPU, keypad)
     lg.setCanvas()
 
     lg.setColor(1, 1, 1, 1)
+end
+
+function loadChip8File(filename)
+    self = ui
+    local chip8 = util.read_file(filename)
+    if type(chip8) == "string" then
+        print(chip8)
+    else
+        for address = 0, #chip8 do
+            self.CPU.memory[address + 0x0200] = chip8[address]
+        end
+        self.CPU.registers.pc(0xC000)
+    end
 end
 
 --function ui:update(dt)
@@ -542,14 +557,14 @@ function ui:draw()
         end
     end
 
+    if filedialog then
+        filedialog = filedialog:draw()
+    end
+
     if imgui.BeginMainMenuBar() then
         if imgui.BeginMenu("File") then
             if imgui.MenuItem("Quickload CHIP-8...") then
-                local chip8 = util.read_file("TETRIS")
-                for address = 0, #chip8 do
-                    self.CPU.memory[address + 0x0200] = chip8[address]
-                end
-                self.CPU.registers.pc(0xC000)
+                filedialog = Filedialog.new("open", loadChip8File, function() end, love.filesystem.getSaveDirectory())
             end
             if imgui.IsItemHovered() then
                 imgui.SetTooltip("Load binary file at $0200 and jump to $C000")

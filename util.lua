@@ -1,3 +1,5 @@
+local nativefs = require "imgui-filedialog.nativefs.nativefs"
+
 local util = {}
 
 function util.read_file(file)
@@ -25,7 +27,7 @@ function util.read_file(file)
         rom.size = address
         return rom
     else
-        print(err)
+        return err
     end
 end
 

@@ -68,11 +68,6 @@ end
 
 function love.draw()
     UI:draw()
-    if debug then
-        love.graphics.setColor(1, 0, 0, 1)
-        love.graphics.print(string.format("FPS: %d", love.timer.getFPS()), 0, love.graphics.getHeight() - 20)
-        love.graphics.setColor(1, 1, 1, 1)
-    end
 end
 
 function love.keypressed(key, scancode)
