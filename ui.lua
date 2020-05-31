@@ -68,8 +68,8 @@ function ui:init(CPU, keypad)
     self.showDisplayWindow = true
     self.showKeypadWindow = true
     self.showCPUWindow = true
-    self.showCHIPOSWindow = true
-    self.showPIAWindow = true
+    self.showCHIPOSWindow = false
+    self.showPIAWindow = false
     self.showInstructionsWindow = true
     self.showMemoryWindow = true
     self.showSpeakerWindow = true
@@ -165,6 +165,7 @@ function ui:draw()
 
         if not self.fullscreenDisplay then
             imgui.SetNextWindowPos(0, 20, "ImGuiCond_FirstUseEver")
+            imgui.SetNextWindowSize(556, 320, "ImGuiCond_FirstUseEver")
             self.showDisplayWindow = imgui.Begin("Display", nil, { "NoCollapse", (not self.fullscreenDisplay) and "MenuBar" })--, { "ImGuiWindowFlags_AlwaysAutoResize" })
             win_x, win_y = imgui.GetWindowSize()
             win_x = win_x - 16
@@ -213,7 +214,8 @@ function ui:draw()
 
     if not self.fullscreenDisplay then
         if self.showSpeakerWindow then
-            imgui.SetNextWindowPos(0, 20, "ImGuiCond_FirstUseEver")
+            imgui.SetNextWindowPos(573, 53, "ImGuiCond_FirstUseEver")
+            imgui.SetNextWindowSize(84, 101, "ImGuiCond_FirstUseEver")
             self.showSpeakerWindow = imgui.Begin("Speaker", true, { })--, { "ImGuiWindowFlags_AlwaysAutoResize" })
 
             local toggle = false
@@ -236,7 +238,8 @@ function ui:draw()
         end
 
         if self.showCPUWindow then
-            imgui.SetNextWindowSize(200, 200, "ImGuiCond_FirstUseEver")
+            imgui.SetNextWindowSize(113, 222, "ImGuiCond_FirstUseEver")
+            imgui.SetNextWindowPos(681, 21, "ImGuiCond_FirstUseEver")
             self.showCPUWindow = imgui.Begin("CPU", true)
             imgui.Text(string.format("Cycles: %d", cycles))
             for _, reg in ipairs({"a", "b"}) do
@@ -318,7 +321,8 @@ function ui:draw()
         end
 
         if self.showInstructionsWindow then
-            imgui.SetNextWindowSize(200, 200, "ImGuiCond_FirstUseEver")
+            imgui.SetNextWindowSize(206, 250, "ImGuiCond_FirstUseEver")
+            imgui.SetNextWindowPos(352, 343, "ImGuiCond_FirstUseEver")
             self.showInstructionsWindow = imgui.Begin("Instructions", true, "MenuBar")
             if imgui.BeginMenuBar() then
                 if imgui.BeginMenu("Settings") then
@@ -384,7 +388,8 @@ function ui:draw()
         end
 
         if self.showMemoryWindow then
-            imgui.SetNextWindowSize(200, 200, "ImGuiCond_FirstUseEver")
+            imgui.SetNextWindowSize(241, 355, "ImGuiCond_FirstUseEver")
+            imgui.SetNextWindowPos(556, 244, "ImGuiCond_FirstUseEver")
             self.showMemoryWindow = imgui.Begin("Memory", true, "MenuBar")
             if imgui.BeginMenuBar() then
                 if imgui.BeginMenu("Settings") then
@@ -485,7 +490,8 @@ function ui:draw()
         end
 
         if self.showKeypadWindow then
-            imgui.SetNextWindowPos(540, 300, "ImGuiCond_FirstUseEver")
+            imgui.SetNextWindowPos(4, 341, "ImGuiCond_FirstUseEver")
+            imgui.SetNextWindowSize(228, 250, "ImGuiCond_FirstUseEver")
             self.showKeypadWindow = imgui.Begin("Keypad", true, { "NoScrollbar", "MenuBar" })
             if imgui.BeginMenuBar() then
                 if imgui.BeginMenu("Layout") then

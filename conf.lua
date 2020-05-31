@@ -1,6 +1,6 @@
 function love.conf(t)
     -- Debug mode
-    t.console = true
+    t.console = false
 
     t.identity = "DRÖM"
     t.window.title = "DRÖM 6800"
