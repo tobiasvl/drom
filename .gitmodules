@@ -1,3 +1,6 @@
 [submodule "moonshine"]
 	path = moonshine
 	url = https://github.com/vrld/moonshine.git
+[submodule "imgui-filedialog/nativefs"]
+	path = imgui-filedialog/nativefs
+	url = https://github.com/megagrump/nativefs.git
