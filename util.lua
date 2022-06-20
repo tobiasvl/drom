@@ -1,4 +1,4 @@
-local nativefs = require "imgui-filedialog.nativefs.nativefs"
+local nativefs = require "love-imgui-filedialog.love-nativefs.nativefs"
 
 local util = {}
 

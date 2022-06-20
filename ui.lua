@@ -2,7 +2,7 @@ local imgui = require "imgui"
 local util = require 'util'
 local moonshine = require 'moonshine'
 local disassembler = require "disassembler"
-local Filedialog = require 'imgui-filedialog.filedialog'
+local Filedialog = require "love-imgui-filedialog.filedialog"
 local filedialog
 
 local lg = love.graphics
