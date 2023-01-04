@@ -1,7 +1,7 @@
-local CPU = require 'cpu'
-local UI = require 'ui'
-local keypad = require 'keypad'
-local util = require 'util'
+local CPU = require "moon6800.cpu"
+local UI = require "ui"
+local keypad = require "keypad"
+local util = require "util"
 
 local conf = require "conf"
 local t = {modules = {}, window = {}}
@@ -16,13 +16,13 @@ function love.load(arg)
     --next_time = love.timer.getTime()
     --debug.debug()
 
-    local memory = require 'memory'
+    local memory = require "moon6800.memory"
     CPU:init(memory)
 
-    local ram = require 'ram'(0x0FFF)
+    local ram = require("moon6800.ram")(0x0FFF)
     memory:connect(0x0000, ram)
 
-    local pia = require 'pia'
+    local pia = require "moon6800.pia"
     memory:connect(0x8010, pia.a)
     memory:connect(0x8012, pia.b)
 
@@ -30,7 +30,7 @@ function love.load(arg)
 
     -- ROM and ROM mirrors
     local rom = util.read_file("Dream6800Rom.bin")
-    local eprom = require 'eprom'(rom)
+    local eprom = require("moon6800.eprom")(rom)
     for address = 0xC000, 0xFFFF - rom.size + 1, rom.size do
         memory:connect(address, eprom)
     end

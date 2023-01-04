@@ -1,7 +1,7 @@
 local imgui = require "imgui"
-local util = require 'util'
-local moonshine = require 'moonshine'
-local disassembler = require "disassembler"
+local util = require "util"
+local moonshine = require "moonshine"
+local disassembler = require "moon6800.disassembler"
 local Filedialog = require "love-imgui-filedialog.filedialog"
 local filedialog
 
@@ -79,10 +79,10 @@ function ui:init(CPU, keypad)
 
     self.followPC = true
 
-    self.effect = moonshine(64*8, 32*8, moonshine.effects.scanlines)
-        .chain(moonshine.effects.glow)
-        .chain(moonshine.effects.chromasep)
-        .chain(moonshine.effects.crt)
+    self.effect =
+        moonshine(64 * 8, 32 * 8, moonshine.effects.scanlines).chain(moonshine.effects.glow).chain(
+        moonshine.effects.chromasep
+    ).chain(moonshine.effects.crt)
     self.effect.chromasep.angle = 0.15
     self.effect.chromasep.radius = 2
     self.effect.scanlines.width = 1
@@ -95,7 +95,7 @@ function ui:init(CPU, keypad)
         volume = 1.0,
         sound = love.audio.newSource("assets/1khz.wav", "static"),
         image = lg.newImage("assets/speaker.png"),
-        image_mute = lg.newImage("assets/speaker-mute.png"),
+        image_mute = lg.newImage("assets/speaker-mute.png")
     }
 
     -- This is unfortunate, but I haven't figured out a way to use
@@ -136,19 +136,19 @@ function loadChip8File(filename)
 end
 
 --function ui:update(dt)
-    --local temp_key_status = {}
-    --for k, v in pairs(button_status) do
-    --    temp_key_status[k] = CPU.key_status[k]
-    --    if v then
-    --        CPU.key_status[k] = v
-    --    end
-    --end
+--local temp_key_status = {}
+--for k, v in pairs(button_status) do
+--    temp_key_status[k] = CPU.key_status[k]
+--    if v then
+--        CPU.key_status[k] = v
+--    end
+--end
 
-    -- foo
+-- foo
 
-    --for k, v in pairs(button_status) do
-    --    CPU.key_status[k] = temp_key_status[k]
-    --end
+--for k, v in pairs(button_status) do
+--    CPU.key_status[k] = temp_key_status[k]
+--end
 --end
 
 function ui:draw()
@@ -166,7 +166,9 @@ function ui:draw()
         if not self.fullscreenDisplay then
             imgui.SetNextWindowPos(0, 20, "ImGuiCond_FirstUseEver")
             imgui.SetNextWindowSize(556, 320, "ImGuiCond_FirstUseEver")
-            self.showDisplayWindow = imgui.Begin("Display", nil, { "NoCollapse", (not self.fullscreenDisplay) and "MenuBar" })--, { "ImGuiWindowFlags_AlwaysAutoResize" })
+            self.showDisplayWindow =
+                imgui.Begin("Display", nil, {"NoCollapse", (not self.fullscreenDisplay) and "MenuBar"})
+             --, { "ImGuiWindowFlags_AlwaysAutoResize" })
             win_x, win_y = imgui.GetWindowSize()
             win_x = win_x - 16
             win_y = win_y - imgui.GetFrameHeight() * 2.8
@@ -180,21 +182,23 @@ function ui:draw()
         if self.CPU.display and self.CPU.drawflag then
             lg.setCanvas(self.canvases.display)
             lg.clear()
-            self.effect(function()
-                lg.setColor(1,1,1)
-                for y = 0, 31 do
-                    for x = 0, 7 do
-                        local byte = self.CPU.memory[0x100 + (y * 8) + x]
-                        for xx = 0, 7 do
-                            local pixel = bit.band(byte, 0x80)
-                            byte = bit.lshift(byte, 1)
-                            if pixel ~= 0 then
-                                lg.rectangle("fill", (x * 64) + (xx * 8), y * 8, 8, 8)
+            self.effect(
+                function()
+                    lg.setColor(1, 1, 1)
+                    for y = 0, 31 do
+                        for x = 0, 7 do
+                            local byte = self.CPU.memory[0x100 + (y * 8) + x]
+                            for xx = 0, 7 do
+                                local pixel = bit.band(byte, 0x80)
+                                byte = bit.lshift(byte, 1)
+                                if pixel ~= 0 then
+                                    lg.rectangle("fill", (x * 64) + (xx * 8), y * 8, 8, 8)
+                                end
                             end
                         end
                     end
                 end
-            end)
+            )
             lg.setCanvas()
             self.CPU.drawflag = false
         end
@@ -202,7 +206,9 @@ function ui:draw()
         if self.fullscreenDisplay then
             love.graphics.draw(
                 self.canvases.display,
-                0, imgui.GetFrameHeight(), nil,
+                0,
+                imgui.GetFrameHeight(),
+                nil,
                 love.graphics.getWidth() / (64 * 8),
                 love.graphics.getHeight() / ((32 * 8) + 8)
             )
@@ -216,7 +222,8 @@ function ui:draw()
         if self.showSpeakerWindow then
             imgui.SetNextWindowPos(573, 53, "ImGuiCond_FirstUseEver")
             imgui.SetNextWindowSize(84, 101, "ImGuiCond_FirstUseEver")
-            self.showSpeakerWindow = imgui.Begin("Speaker", true, { })--, { "ImGuiWindowFlags_AlwaysAutoResize" })
+            self.showSpeakerWindow = imgui.Begin("Speaker", true, {})
+             --, { "ImGuiWindowFlags_AlwaysAutoResize" })
 
             local toggle = false
             if self.speaker.mute then
@@ -232,7 +239,9 @@ function ui:draw()
                     toggle = imgui.ImageButton(self.canvases.speaker, 60, 60)
                 end
             end
-            if toggle then self.speaker.mute = not self.speaker.mute end
+            if toggle then
+                self.speaker.mute = not self.speaker.mute
+            end
 
             imgui.End()
         end
@@ -250,7 +259,8 @@ function ui:draw()
                 end
                 imgui.Text(string.format(" %s:      ", reg))
                 imgui.SameLine()
-                local text, textinput = imgui.InputText("##reg-" .. reg, string.format("%02X", register()), 3, hex_input_flags)
+                local text, textinput =
+                    imgui.InputText("##reg-" .. reg, string.format("%02X", register()), 3, hex_input_flags)
                 if reg_changed then
                     imgui.PopStyleColor()
                 end
@@ -266,7 +276,8 @@ function ui:draw()
                 end
                 imgui.Text(string.format("%s:    ", reg))
                 imgui.SameLine()
-                local text, textinput = imgui.InputText("##reg-" .. reg, string.format("%04X", register()), 5, hex_input_flags)
+                local text, textinput =
+                    imgui.InputText("##reg-" .. reg, string.format("%04X", register()), 5, hex_input_flags)
                 if reg_changed then
                     imgui.PopStyleColor()
                 end
@@ -278,7 +289,8 @@ function ui:draw()
             for i, cc in ipairs({"h", "i", "n", "z", "v", "c"}) do
                 s = s .. (self.CPU.registers.status[cc] and "1" or "0")
             end
-            imgui.Text(string.format("CC: 11%s", s))--string.format("CC: %02X", self.CPU.registers.status()))
+            imgui.Text(string.format("CC: 11%s", s))
+             --string.format("CC: %02X", self.CPU.registers.status()))
             imgui.Text("      HINZVC")
             if self.CPU.irq then
                 imgui.PushStyleColor("ImGui_Text", 1, 0, 0, 1)
@@ -336,7 +348,13 @@ function ui:draw()
             imgui.Text("Breakpoint: ")
             imgui.SameLine()
             imgui.PushItemWidth(4 * 9) -- TODO get char width
-            local text, textinput = imgui.InputText("##breakpoint", self.CPU.breakpoint and string.format("%04X", self.CPU.breakpoint) or "", 5, hex_input_flags)
+            local text, textinput =
+                imgui.InputText(
+                "##breakpoint",
+                self.CPU.breakpoint and string.format("%04X", self.CPU.breakpoint) or "",
+                5,
+                hex_input_flags
+            )
             imgui.PopItemWidth()
             if textinput then
                 self.CPU.breakpoint = tonumber(text, 16)
@@ -378,7 +396,13 @@ function ui:draw()
             imgui.Text("Scroll to: ")
             imgui.SameLine()
             imgui.PushItemWidth(4 * 9) -- TODO get char width
-            local scroll, scroll_input = imgui.InputText("##instructionscroll", string.format("%04X", self.instructionsScroll or 0), 5, hex_input_flags)
+            local scroll, scroll_input =
+                imgui.InputText(
+                "##instructionscroll",
+                string.format("%04X", self.instructionsScroll or 0),
+                5,
+                hex_input_flags
+            )
             imgui.PopItemWidth()
             if scroll_input then
                 self.instructionsScroll = tonumber(scroll, 16)
@@ -406,7 +430,13 @@ function ui:draw()
             imgui.SameLine()
             imgui.PushItemWidth(4 * 9) -- TODO get char width
             local breakpoint = self.CPU.memory.breakpoint
-            local new_breakpoint, breakpoint_input = imgui.InputText("##membreakpoint", breakpoint.address and string.format("%04X", breakpoint.address) or "", 5, hex_input_flags)
+            local new_breakpoint, breakpoint_input =
+                imgui.InputText(
+                "##membreakpoint",
+                breakpoint.address and string.format("%04X", breakpoint.address) or "",
+                5,
+                hex_input_flags
+            )
             imgui.PopItemWidth()
             if breakpoint_input then
                 breakpoint.address = tonumber(new_breakpoint, 16)
@@ -440,7 +470,11 @@ function ui:draw()
                     imgui.Text(string.format("%04X: %02X %03d", i, c, c))
                     imgui.SameLine()
                     -- Print only printable ASCII characters
-                    if c > 31 and c < 127 then imgui.Text(string.char(c) .. " ") else imgui.Text("  ") end
+                    if c > 31 and c < 127 then
+                        imgui.Text(string.char(c) .. " ")
+                    else
+                        imgui.Text("  ")
+                    end
                     imgui.SameLine()
                     local byte = {}
                     for j = 1, 8 do
@@ -465,7 +499,8 @@ function ui:draw()
             imgui.Text("Scroll to: ")
             imgui.SameLine()
             imgui.PushItemWidth(4 * 9) -- TODO get char width
-            local scroll, scroll_input = imgui.InputText("##memscroll", string.format("%04X", self.memoryScroll or 0), 5, hex_input_flags)
+            local scroll, scroll_input =
+                imgui.InputText("##memscroll", string.format("%04X", self.memoryScroll or 0), 5, hex_input_flags)
             imgui.PopItemWidth()
             if scroll_input then
                 self.memoryScroll = tonumber(scroll, 16)
@@ -492,26 +527,32 @@ function ui:draw()
         if self.showKeypadWindow then
             imgui.SetNextWindowPos(4, 341, "ImGuiCond_FirstUseEver")
             imgui.SetNextWindowSize(228, 250, "ImGuiCond_FirstUseEver")
-            self.showKeypadWindow = imgui.Begin("Keypad", true, { "NoScrollbar", "MenuBar" })
+            self.showKeypadWindow = imgui.Begin("Keypad", true, {"NoScrollbar", "MenuBar"})
             if imgui.BeginMenuBar() then
                 if imgui.BeginMenu("Layout") then
                     if imgui.MenuItem("Digitran", nil, self.keypad.keys_dream == self.keypad.keys_digitran, true) then
                         self.keypad.keys_dream = self.keypad.keys_digitran
                     end
                     if imgui.IsItemHovered() then
-                        imgui.SetTooltip("Used in many DREAM builds; de facto standard.\nStandard layout in the DREAMER newsletter.\nAlso used by the 40th anniversary DREAM reproduction")
+                        imgui.SetTooltip(
+                            "Used in many DREAM builds; de facto standard.\nStandard layout in the DREAMER newsletter.\nAlso used by the 40th anniversary DREAM reproduction"
+                        )
                     end
                     if imgui.MenuItem("Original", nil, self.keypad.keys_dream == self.keypad.keys_original, true) then
                         self.keypad.keys_dream = self.keypad.keys_original
                     end
                     if imgui.IsItemHovered() then
-                        imgui.SetTooltip("The layout used in the Electronics Australia articles.\nUsed by the prototype DREAM 6800, and the CHIP-8 Classic Computer.")
+                        imgui.SetTooltip(
+                            "The layout used in the Electronics Australia articles.\nUsed by the prototype DREAM 6800, and the CHIP-8 Classic Computer."
+                        )
                     end
                     if imgui.MenuItem("COSMAC VIP", nil, self.keypad.keys_dream == self.keypad.keys_cosmac, true) then
                         self.keypad.keys_dream = self.keypad.keys_cosmac
                     end
                     if imgui.IsItemHovered() then
-                        imgui.SetTooltip("Used by RCA's COSMAC VIP, the DREAM's predecessor.\nUseful for CHIP-8 compatibility.")
+                        imgui.SetTooltip(
+                            "Used by RCA's COSMAC VIP, the DREAM's predecessor.\nUseful for CHIP-8 compatibility."
+                        )
                     end
                     imgui.EndMenu()
                 end
@@ -531,7 +572,8 @@ function ui:draw()
                     --imgui.PushStyleColor("ImGuiCol_Button", 117 / 255, 138 / 255, 204 / 255, 1)
                     imgui.PushStyleColor("ImGuiCol_Button", 0.4588, 0.5411, 0.8, 1)
                 end
-                self.keypad.button_status[k] = imgui.Button(string.format("%X", self.keypad.keys_dream.layout[k]), but_w, but_h)
+                self.keypad.button_status[k] =
+                    imgui.Button(string.format("%X", self.keypad.keys_dream.layout[k]), but_w, but_h)
                 if self.keypad.button_status[k] then
                     self.keypad:keypressed(nil, self.keypad.keys_qwerty[k])
                 end
@@ -570,7 +612,14 @@ function ui:draw()
     if imgui.BeginMainMenuBar() then
         if imgui.BeginMenu("File") then
             if imgui.MenuItem("Quickload CHIP-8...") then
-                filedialog = Filedialog.new("open", loadChip8File, function() end, love.filesystem.getSaveDirectory())
+                filedialog =
+                    Filedialog.new(
+                    "open",
+                    loadChip8File,
+                    function()
+                    end,
+                    love.filesystem.getSaveDirectory()
+                )
             end
             if imgui.IsItemHovered() then
                 imgui.SetTooltip("Load binary file at $0200 and jump to $C000")
@@ -598,25 +647,67 @@ function ui:draw()
             if imgui.MenuItem("Display", nil, self.showDisplayWindow, false) then
                 self.showDisplayWindow = not self.showDisplayWindow
             end
-            if imgui.MenuItem("CPU status", nil, self.showCPUWindow and not self.fullscreenDisplay, not self.fullscreenDisplay) then
+            if
+                imgui.MenuItem(
+                    "CPU status",
+                    nil,
+                    self.showCPUWindow and not self.fullscreenDisplay,
+                    not self.fullscreenDisplay
+                )
+             then
                 self.showCPUWindow = not self.showCPUWindow
             end
-            if imgui.MenuItem("CHIPOS/CHIP-8 status", nil, self.showCHIPOSWindow and not self.fullscreenDisplay, not self.fullscreenDisplay) then
+            if
+                imgui.MenuItem(
+                    "CHIPOS/CHIP-8 status",
+                    nil,
+                    self.showCHIPOSWindow and not self.fullscreenDisplay,
+                    not self.fullscreenDisplay
+                )
+             then
                 self.showCHIPOSWindow = not self.showCHIPOSWindow
             end
             if imgui.MenuItem("PIA", nil, self.showPIAWindow and not self.fullscreenDisplay, not self.fullscreenDisplay) then
                 self.showPIAWindow = not self.showPIAWindow
             end
-            if imgui.MenuItem("Keypad", nil, self.showKeypadWindow and not self.fullscreenDisplay, not self.fullscreenDisplay) then
+            if
+                imgui.MenuItem(
+                    "Keypad",
+                    nil,
+                    self.showKeypadWindow and not self.fullscreenDisplay,
+                    not self.fullscreenDisplay
+                )
+             then
                 self.showKeypadWindow = not self.showKeypadWindow
             end
-            if imgui.MenuItem("Instructions", nil, self.showInstructionsWindow and not self.fullscreenDisplay, not self.fullscreenDisplay) then
+            if
+                imgui.MenuItem(
+                    "Instructions",
+                    nil,
+                    self.showInstructionsWindow and not self.fullscreenDisplay,
+                    not self.fullscreenDisplay
+                )
+             then
                 self.showInstructionsWindow = not self.showInstructionsWindow
             end
-            if imgui.MenuItem("Memory", nil, self.showMemoryWindow and not self.fullscreenDisplay, not self.fullscreenDisplay) then
+            if
+                imgui.MenuItem(
+                    "Memory",
+                    nil,
+                    self.showMemoryWindow and not self.fullscreenDisplay,
+                    not self.fullscreenDisplay
+                )
+             then
                 self.showMemoryWindow = not self.showMemoryWindow
             end
-            if imgui.MenuItem("Speaker", nil, self.showSpeakerWindow and not self.fullscreenDisplay, not self.fullscreenDisplay) then
+            if
+                imgui.MenuItem(
+                    "Speaker",
+                    nil,
+                    self.showSpeakerWindow and not self.fullscreenDisplay,
+                    not self.fullscreenDisplay
+                )
+             then
                 self.showSpeakerWindow = not self.showSpeakerWindow
             end
             imgui.EndMenu()
@@ -688,7 +779,7 @@ function ui:drawDisplayMenu()
     end
     if imgui.BeginMenu("Tools") then
         if imgui.MenuItem("Save screenshot", nil, false, true) then
-            self.canvases.display:newImageData():encode('png', os.time() .. ".png")
+            self.canvases.display:newImageData():encode("png", os.time() .. ".png")
         end
         if imgui.MenuItem("Fill screen", "Alt + Enter", self.fullscreenDisplay, true) then
             self.fullscreenDisplay = not self.fullscreenDisplay
@@ -696,6 +787,5 @@ function ui:drawDisplayMenu()
         imgui.EndMenu()
     end
 end
-
 
 return ui

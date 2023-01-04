@@ -6,7 +6,7 @@ function love.conf(t)
     t.window.title = "DRÖM 6800"
     t.window.resizable = true
 
-    t.version = "11.3"
+    t.version = "11.4"
 
     -- Disable stuff we don't use
     t.accelerometerjoystick = false
@@ -15,5 +15,4 @@ function love.conf(t)
     t.modules.physics = false
     t.modules.touch = false
     t.modules.video = false
-
 end

@@ -4,3 +4,6 @@
 [submodule "love-imgui-filedialog"]
 	path = love-imgui-filedialog
 	url = https://github.com/tobiasvl/love-imgui-filedialog
+[submodule "moon6800"]
+	path = moon6800
+	url = git@github.com:tobiasvl/moon6800.git

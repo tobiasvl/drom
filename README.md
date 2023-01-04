@@ -5,7 +5,7 @@ DRÖM ("DREAM" in Swedish) is an emulator for the CHIP-8-based DREAM 6800 home c
 
 You can read about the development of DRÖM in [these blog posts](https://tobiasvl.github.io/tags/#dream-6800), and about the DREAM's history on the official [DREAM 6800 Archive Site](http://www.mjbauer.biz/DREAM6800.htm).
 
-![Screenshot of CHIPOS in DRÖM](screenshot.png)
+![Screenshot of CHIPOS in DRÖM](assets/screenshot.png)
 
 Features
 --------
